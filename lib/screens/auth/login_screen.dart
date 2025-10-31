@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:setor_mobil/screens/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -24,16 +25,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       // TODO: Implement API call
-      await Future.delayed(const Duration(seconds: 2)); 
-      
+      await Future.delayed(const Duration(seconds: 2));
+
       setState(() => _isLoading = false);
-      
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login Successful!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Login Successful!')));
       }
     }
   }
@@ -44,6 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
   //     const SnackBar(content: Text('Google Sign In coming soon!')),
   //   );
   // }
+
+  void _navigateToRegister() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RegisterScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-                
+
                 Center(
                   child: Column(
                     children: [
@@ -87,15 +95,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Please Login',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
 
                 Column(
@@ -150,9 +155,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -218,9 +223,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -237,9 +242,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(
@@ -271,9 +276,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Row(
                 //   children: [
                 //     Expanded(child: Divider(color: Colors.grey[300])),
@@ -290,9 +295,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 //     Expanded(child: Divider(color: Colors.grey[300])),
                 //   ],
                 // ),
-                
                 const SizedBox(height: 24),
-              
+
                 // SizedBox(
                 //   height: 56,
                 //   child: OutlinedButton.icon(
@@ -318,7 +322,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 //     ),
                 //   ),
                 // ),
-                
                 const SizedBox(height: 24),
 
                 Row(
@@ -326,15 +329,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       'No Account? ',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     TextButton(
-                      onPressed: () {
-
-                      },
+                      onPressed: _navigateToRegister,
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,
