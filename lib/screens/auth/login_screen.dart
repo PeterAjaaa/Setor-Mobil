@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:setor_mobil/screens/auth/forgotpass_screen.dart';
 import 'package:setor_mobil/screens/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -50,6 +51,13 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const RegisterScreen()),
+    );
+  }
+
+  void _navigateToForgotPassword() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ForgotpassScreen()),
     );
   }
 
@@ -229,9 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      // TODO: Navigate to forgot password
-                    },
+                    onPressed: _navigateToForgotPassword,
                     child: const Text(
                       'Forgot Password?',
                       style: TextStyle(
