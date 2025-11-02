@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:setor_mobil/screens/auth/forgotpass_screen.dart';
 import 'package:setor_mobil/screens/auth/register_screen.dart';
+import 'package:setor_mobil/screens/page/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -33,9 +34,10 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (mounted) {
-        ScaffoldMessenger.of(
+        Navigator.pushReplacement(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Login Successful!')));
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
       }
     }
   }

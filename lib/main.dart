@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:setor_mobil/screens/auth/login_screen.dart';
-import 'package:setor_mobil/screens/auth/register_screen.dart';
 
 void main() {
   runApp(const MyApp());
