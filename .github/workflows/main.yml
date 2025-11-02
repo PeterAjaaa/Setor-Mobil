@@ -55,11 +55,11 @@ jobs:
               if: env.TAG_EXISTS == 'true'
               id: modify_tag
               run: |
-                  new_version="${{ github.run_number }}-build-${{ github.run_number }}"
+                  new_version="${{ github.run_number }}-build-${{ github.run_number }}-dev"
                   echo "VERSION=$new_version" >> $GITHUB_ENV
 
             - name: Create Release
               uses: ncipollo/release-action@v1
               with:
                   artifacts: "build/app/outputs/flutter-apk/app-release.apk"
-                  tag: v${{ github.run_number }}
+                  tag: v${{ github.run_number }}-dev
