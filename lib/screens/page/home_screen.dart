@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:setor_mobil/screens/auth/login_screen.dart';
 import 'dart:async';
 
+import 'package:setor_mobil/screens/page/vehicle_detail_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -577,7 +579,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(
+                          builder: (context) => VehicleDetailScreen(vehicle: vehicle),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF0066FF),
                       foregroundColor: Colors.white,
