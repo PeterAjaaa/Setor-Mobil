@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:setor_mobil/screens/auth/login_screen.dart';
 import 'package:setor_mobil/screens/page/home_screen.dart';
+import 'package:setor_mobil/screens/page/profile_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -409,17 +410,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[700],
-            ),
+            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
           ),
         ),
       ],
     );
   }
 
-   Widget _buildBottomNav() {
+  Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -440,7 +438,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               _buildNavItem(Icons.home, 'Home', 0),
               _buildNavItem(Icons.calendar_today_outlined, 'Order', 1),
               _buildNavItem(Icons.favorite_outline, 'Favorite', 2),
-              _buildNavItem(Icons.menu, 'Menu', 3),
+              _buildNavItem(Icons.person_outline, 'Profile', 3),
             ],
           ),
         ),
@@ -457,15 +455,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         if (index == 0) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => HomeScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => HomeScreen()),
           );
         }
 
         if (index == 3) {
-          _handleLogout();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ProfileScreen()), 
+          );
         }
+
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -489,4 +489,3 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     );
   }
 }
-

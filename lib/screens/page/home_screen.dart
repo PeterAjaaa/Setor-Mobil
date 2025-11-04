@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:setor_mobil/screens/auth/login_screen.dart';
 import 'package:setor_mobil/screens/page/order_screen.dart';
+import 'package:setor_mobil/screens/page/profile_screen.dart';
 import 'dart:async';
 
 import 'package:setor_mobil/screens/page/vehicle_detail_screen.dart';
@@ -582,9 +583,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
-                        context, 
+                        context,
                         MaterialPageRoute(
-                          builder: (context) => VehicleDetailScreen(vehicle: vehicle),
+                          builder: (context) =>
+                              VehicleDetailScreen(vehicle: vehicle),
                         ),
                       );
                     },
@@ -635,7 +637,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildNavItem(Icons.home, 'Home', 0),
               _buildNavItem(Icons.calendar_today_outlined, 'Order', 1),
               _buildNavItem(Icons.favorite_outline, 'Favorite', 2),
-              _buildNavItem(Icons.menu, 'Menu', 3),
+              _buildNavItem(Icons.person_outline, 'Profile', 3),
             ],
           ),
         ),
@@ -652,15 +654,17 @@ class _HomeScreenState extends State<HomeScreen> {
         if (index == 1) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => OrderHistoryScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => OrderHistoryScreen()),
           );
         }
 
         if (index == 3) {
-          _handleLogout();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ProfileScreen()),
+          );
         }
+
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
