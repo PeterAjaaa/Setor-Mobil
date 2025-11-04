@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:setor_mobil/screens/auth/login_screen.dart';
+import 'package:setor_mobil/screens/page/home_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -10,6 +12,7 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _selectedBottomNavIndex = 1;
 
   final List<Map<String, dynamic>> _ongoingOrders = [
     {
@@ -60,6 +63,34 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _handleLogout() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Logout'),
+        content: Text('Are you sure you want to logout?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0066FF)),
+            child: Text('Logout'),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _getStatusColor(String status) {
@@ -140,6 +171,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           _buildOrderList(_completedOrders),
         ],
       ),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -386,4 +418,75 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       ],
     );
   }
+
+   Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.home, 'Home', 0),
+              _buildNavItem(Icons.calendar_today_outlined, 'Order', 1),
+              _buildNavItem(Icons.favorite_outline, 'Favorite', 2),
+              _buildNavItem(Icons.menu, 'Menu', 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isSelected = _selectedBottomNavIndex == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedBottomNavIndex = index);
+
+        if (index == 0) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(),
+            ),
+          );
+        }
+
+        if (index == 3) {
+          _handleLogout();
+        }
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? Color(0xFF0066FF) : Colors.grey[400],
+            size: 24,
+          ),
+          SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Color(0xFF0066FF) : Colors.grey[400],
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
