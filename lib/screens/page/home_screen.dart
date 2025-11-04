@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:setor_mobil/screens/auth/login_screen.dart';
+import 'package:setor_mobil/screens/page/order_screen.dart';
 import 'dart:async';
 
 import 'package:setor_mobil/screens/page/vehicle_detail_screen.dart';
@@ -647,6 +648,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () {
         setState(() => _selectedBottomNavIndex = index);
+
+        if (index == 1) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderHistoryScreen(),
+            ),
+          );
+        }
 
         if (index == 3) {
           _handleLogout();
