@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'Welcome to SeTor-Mobil',
+                        'SeTor-Mobil',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -158,6 +158,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           return 'Please enter your email';
                         }
                         if (!value.contains('@')) {
+                          return 'Email is not valid';
+                        }
+                        if (!value.endsWith('@gmail.com')) {
                           return 'Email is not valid';
                         }
                         return null;

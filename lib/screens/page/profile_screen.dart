@@ -298,7 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     _buildMenuItem(
                       Icons.description_outlined,
-                      'Tems & Conditions',
+                      'Terms & Conditions',
                       Colors.grey,
                       () => _handleEditProfile(),
                     ),
