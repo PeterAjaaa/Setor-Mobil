@@ -132,3 +132,7 @@ git branch -d feature/add-dark-mode
 ## 🆘 If You’re Stuck
 
 Just ping the other dev in the PR or message us directly. Don’t push to `dev` or `main` if you’re unsure — ask first.
+
+## TODO
+
+* Change rating calculation from client-side calculation to data from API
