@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:setor_mobil/screens/auth/login_screen.dart';
+import 'package:setor_mobil/screens/page/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,13 +21,15 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _scaleAnimation;
   late Animation<double> _bounceAnimation;
 
+  final _storage = const FlutterSecureStorage();
+
   @override
   void initState() {
     super.initState();
 
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1500),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -37,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _bounceController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _bounceAnimation = Tween<double>(begin: 0.0, end: -15.0).animate(
@@ -46,23 +51,62 @@ class _SplashScreenState extends State<SplashScreen>
 
     _dotsController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1200),
     );
 
     _animationController.forward();
 
-    Future.delayed(Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       _bounceController.repeat(reverse: true);
     });
 
     _dotsController.repeat();
 
-    Timer(Duration(seconds: 3), () {
+    // Check authentication after animations start
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    // Wait minimum 3 seconds for splash screen experience
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    try {
+      final token = await _storage.read(key: 'token');
+
+      if (token != null && token.isNotEmpty) {
+        bool isExpired = JwtDecoder.isExpired(token);
+
+        if (!mounted) return;
+
+        if (!isExpired) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+          return;
+        } else {
+          await _storage.delete(key: 'token');
+        }
+      }
+
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
-    });
+    } catch (e) {
+      // Error decoding token or reading storage, go to login
+      await _storage.delete(key: 'token');
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override
@@ -77,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -93,7 +137,7 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -105,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen>
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -125,19 +169,19 @@ class _SplashScreenState extends State<SplashScreen>
                           return Transform.translate(
                             offset: Offset(0, _bounceAnimation.value),
                             child: Container(
-                              padding: EdgeInsets.all(32),
+                              padding: const EdgeInsets.all(32),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
+                                    color: Colors.black.withValues(alpha: 0.3),
                                     blurRadius: 20,
-                                    offset: Offset(0, 10),
+                                    offset: const Offset(0, 10),
                                   ),
                                 ],
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.directions_car,
                                 size: 80,
                                 color: Color(0xFF0066FF),
@@ -147,9 +191,9 @@ class _SplashScreenState extends State<SplashScreen>
                         },
                       ),
 
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
-                      Text(
+                      const Text(
                         'SeTor-Mobil',
                         style: TextStyle(
                           fontSize: 48,
@@ -159,7 +203,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
 
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
                       Text(
                         'Sewa Motor & Mobil',
@@ -169,7 +213,7 @@ class _SplashScreenState extends State<SplashScreen>
                           fontWeight: FontWeight.w300,
                         ),
                       ),
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
                       AnimatedBuilder(
                         animation: _dotsController,
@@ -178,16 +222,16 @@ class _SplashScreenState extends State<SplashScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               _buildAnimatedDot(0),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               _buildAnimatedDot(200),
-                              SizedBox(width: 8),
+                              const SizedBox(width: 8),
                               _buildAnimatedDot(400),
                             ],
                           );
                         },
                       ),
 
-                      SizedBox(height: 60),
+                      const SizedBox(height: 60),
 
                       Text(
                         'v1.0.0',
@@ -217,7 +261,10 @@ class _SplashScreenState extends State<SplashScreen>
       child: Container(
         width: 12,
         height: 12,
-        decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }
