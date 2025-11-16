@@ -97,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   @override
-  void intitState() {
+  void initState() {
     super.initState();
     _startPromoAutoScroll();
   }
@@ -322,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             promo['subtitle'],
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 14,
                             ),
                           ),
@@ -473,7 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.70,
+              childAspectRatio: 0.65,
             ),
             itemCount: _filteredVehicles.length,
             itemBuilder: (context, index) {
@@ -494,7 +494,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -509,8 +509,8 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF0066FF).withOpacity(0.1),
-                  Color(0xFF1A1A1A).withOpacity(0.05),
+                  Color(0xFF0066FF).withValues(alpha: 0.1),
+                  Color(0xFF1A1A1A).withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -622,7 +622,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: Offset(0, -5),
           ),
@@ -664,7 +664,6 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (context) => ProfileScreen()),
           );
         }
-
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
