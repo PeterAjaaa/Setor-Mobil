@@ -1,10 +1,14 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:setor_mobil/screens/auth/login_screen.dart';
 import 'package:setor_mobil/screens/page/order_screen.dart';
 import 'package:setor_mobil/screens/page/profile_screen.dart';
-import 'dart:async';
-
 import 'package:setor_mobil/screens/page/vehicle_detail_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedCategory = 'All';
   final PageController _promoController = PageController();
   Timer? _promoTimer;
+  final _storage = const FlutterSecureStorage();
 
   final List<Map<String, dynamic>> _promos = [
     {
@@ -38,68 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
     },
   ];
 
-  final List<Map<String, dynamic>> _vehicles = [
-    {
-      'name': 'Honda Beat',
-      'type': 'Motorcycle',
-      'price': 'Rp 50.000',
-      'rating': 4.8,
-    },
-    {
-      'name': 'Yamaha Aerox',
-      'type': 'Motorcycle',
-      'price': 'Rp 75.000',
-      'rating': 4.9,
-    },
-    {
-      'name': 'Honda Vario',
-      'type': 'Motorcycle',
-      'price': 'Rp 60.000',
-      'rating': 4.7,
-    },
-    {
-      'name': 'Toyota Avanza',
-      'type': 'Car',
-      'price': 'Rp 300.000',
-      'rating': 4.8,
-    },
-    {'name': 'Honda Brio', 'type': 'Car', 'price': 'Rp 250.000', 'rating': 4.6},
-    {
-      'name': 'Daihatsu Xenia',
-      'type': 'Car',
-      'price': 'Rp 200.000',
-      'rating': 4.7,
-    },
-    {
-      'name': 'Suzuki Ertiga',
-      'type': 'Car',
-      'price': 'Rp 320.000',
-      'rating': 4.8,
-    },
-    {
-      'name': 'Honda PCX',
-      'type': 'Motorcycle',
-      'price': 'Rp 85.000',
-      'rating': 4.9,
-    },
-    {
-      'name': 'Yamaha NMAX',
-      'type': 'Motorcycle',
-      'price': 'Rp 90.000',
-      'rating': 4.8,
-    },
-    {
-      'name': 'Toyota Innova',
-      'type': 'Car',
-      'price': 'Rp 400.000',
-      'rating': 4.8,
-    },
-  ];
+  List<Map<String, dynamic>> _vehicles = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _startPromoAutoScroll();
+    _fetchVehicles();
   }
 
   @override
@@ -107,6 +58,135 @@ class _HomeScreenState extends State<HomeScreen> {
     _promoTimer?.cancel();
     _promoController.dispose();
     super.dispose();
+  }
+
+  double _calculateAverageRating(List<dynamic>? ratings) {
+    if (ratings == null || ratings.isEmpty) return 0.0;
+
+    double sum = 0;
+    for (var rating in ratings) {
+      sum += (rating['Rating'] ?? 0).toDouble();
+    }
+    return sum / ratings.length;
+  }
+
+  Future<void> _fetchVehicles() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Get the JWT token from secure storage
+      final token = await _storage.read(key: 'token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+
+      // Fetch cars and motorcycles in parallel with auth header
+      final responses = await Future.wait([
+        http.get(
+          Uri.parse('https://api.intracrania.com/cars'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+        http.get(
+          Uri.parse('https://api.intracrania.com/motorcycles'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      ]);
+
+      List<Map<String, dynamic>> allVehicles = [];
+
+      // Process cars
+      if (responses[0].statusCode == 200) {
+        final carsData = jsonDecode(responses[0].body);
+
+        if (carsData['status'] == 200 && carsData['data'] != null) {
+          final cars = (carsData['data'] as List)
+              .where((car) {
+                return car['status'] == 'Available';
+              })
+              .map((car) {
+                return {
+                  'id': car['id'],
+                  'name': '${car['brand']} ${car['model']}',
+                  'brand': car['brand'],
+                  'model': car['model'],
+                  'type': 'Car',
+                  'price': 'Rp ${_formatPrice(car['price_per_day'])}/day',
+                  'pricePerDay': car['price_per_day'],
+                  'rating': _calculateAverageRating(car['ratings']),
+                  'year': car['year'],
+                  'description': car['description'],
+                  'image_url': car['image_url'],
+                  'registration_num': car['registration_num'],
+                };
+              })
+              .toList();
+          allVehicles.addAll(cars);
+        }
+      }
+
+      // Process motorcycles
+      if (responses[1].statusCode == 200) {
+        final motorcyclesData = jsonDecode(responses[1].body);
+
+        if (motorcyclesData['status'] == 200 &&
+            motorcyclesData['data'] != null) {
+          final motorcycles = (motorcyclesData['data'] as List)
+              .where((moto) {
+                return moto['status'] == 'Available';
+              })
+              .map((moto) {
+                return {
+                  'id': moto['id'],
+                  'name': '${moto['brand']} ${moto['model']}',
+                  'brand': moto['brand'],
+                  'model': moto['model'],
+                  'type': 'Motorcycle',
+                  'price': 'Rp ${_formatPrice(moto['price_per_day'])}/day',
+                  'pricePerDay': moto['price_per_day'],
+                  'rating': _calculateAverageRating(moto['ratings']),
+                  'year': moto['year'],
+                  'description': moto['description'],
+                  'image_url': moto['image_url'],
+                  'registration_num': moto['registration_num'],
+                };
+              })
+              .toList();
+          allVehicles.addAll(motorcycles);
+        }
+      }
+
+      setState(() {
+        _vehicles = allVehicles;
+        _isLoading = false;
+      });
+    } catch (e) {
+      log('Error fetching vehicles: $e');
+      setState(() => _isLoading = false);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load vehicles: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _formatPrice(dynamic price) {
+    if (price == null) return '0';
+    return price.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
   }
 
   void _startPromoAutoScroll() {
@@ -170,22 +250,30 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildHeader(),
 
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPromoCarousel(),
-
-                    SizedBox(height: 5),
-
-                    _buildCategories(),
-                    SizedBox(height: 24),
-
-                    _buildVehicleList(),
-                    SizedBox(height: 80),
-                  ],
-                ),
-              ),
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF0066FF),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _fetchVehicles,
+                      color: Color(0xFF0066FF),
+                      child: SingleChildScrollView(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildPromoCarousel(),
+                            SizedBox(height: 5),
+                            _buildCategories(),
+                            SizedBox(height: 24),
+                            _buildVehicleList(),
+                            SizedBox(height: 80),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -432,6 +520,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVehicleList() {
+    if (_filteredVehicles.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.directions_car_outlined,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              SizedBox(height: 16),
+              Text(
+                'No vehicles available',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -554,27 +668,39 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      vehicle['price'],
-                      style: TextStyle(
-                        color: Color(0xFF0066FF),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                    Expanded(
+                      child: Text(
+                        vehicle['price'],
+                        style: TextStyle(
+                          color: Color(0xFF0066FF),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.amber, size: 14),
-                        SizedBox(width: 2),
-                        Text(
-                          vehicle['rating'].toString(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                    vehicle['rating'] > 0.0
+                        ? Row(
+                            children: [
+                              Icon(Icons.star, color: Colors.amber, size: 14),
+                              SizedBox(width: 2),
+                              Text(
+                                vehicle['rating'].toStringAsFixed(1),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            'No rating',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[400],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
                 SizedBox(height: 8),
