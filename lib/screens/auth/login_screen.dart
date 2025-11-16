@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:setor_mobil/screens/auth/forgotpass_screen.dart';
 import 'package:setor_mobil/screens/auth/register_screen.dart';
 import 'package:setor_mobil/screens/page/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -14,8 +17,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _storage = const FlutterSecureStorage();
+
   bool _obscurePassword = true;
   bool _isLoading = false;
+
+  final emailRegex = RegExp(
+    r"^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+  );
 
   @override
   void dispose() {
@@ -28,26 +37,48 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // TODO: Implement API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() => _isLoading = false);
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+      try {
+        final response = await http.post(
+          Uri.parse('https://api.intracrania.com/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': _emailController.text.trim(),
+            'password': _passwordController.text,
+          }),
         );
+
+        final data = jsonDecode(response.body);
+
+        if (response.statusCode == 200 && data['status'] == 200) {
+          await _storage.write(key: 'token', value: data['data']['token']);
+
+          if (!mounted) return;
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message'] ?? 'Login failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
-
-  //Google Sign In
-  // Future<void> _handleGoogleLogin() async {
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     const SnackBar(content: Text('Google Sign In coming soon!')),
-  //   );
-  // }
 
   void _navigateToRegister() {
     Navigator.push(
@@ -76,7 +107,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-
                 Center(
                   child: Column(
                     children: [
@@ -104,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Please Login',
+                        'Login to your existing Setor-Mobil account',
                         style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
@@ -157,11 +187,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
                         }
-                        if (!value.contains('@')) {
-                          return 'Email is not valid';
-                        }
-                        if (!value.endsWith('@gmail.com')) {
-                          return 'Email is not valid';
+                        if (!emailRegex.hasMatch(value)) {
+                          return 'Please enter a valid email address';
                         }
                         return null;
                       },
@@ -228,8 +255,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
                         }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters long';
+                        if (value.length < 8) {
+                          return 'Password must be at least 8 characters long';
                         }
                         return null;
                       },
@@ -264,7 +291,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       backgroundColor: const Color(0xFF0066FF),
                       foregroundColor: Colors.white,
                       elevation: 2,
-                      shadowColor: const Color(0xFF0066FF).withOpacity(0.3),
+                      shadowColor: const Color(
+                        0xFF0066FF,
+                      ).withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -288,52 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
-
-                // Row(
-                //   children: [
-                //     Expanded(child: Divider(color: Colors.grey[300])),
-                //     Padding(
-                //       padding: const EdgeInsets.symmetric(horizontal: 16),
-                //       child: Text(
-                //         'or',
-                //         style: TextStyle(
-                //           color: Colors.grey[600],
-                //           fontSize: 14,
-                //         ),
-                //       ),
-                //     ),
-                //     Expanded(child: Divider(color: Colors.grey[300])),
-                //   ],
-                // ),
-                const SizedBox(height: 24),
-
-                // SizedBox(
-                //   height: 56,
-                //   child: OutlinedButton.icon(
-                //     onPressed: _handleGoogleLogin,
-                //     icon: Image.network(
-                //       'https://www.google.com/favicon.ico',
-                //       width: 20,
-                //       height: 20,
-                //     ),
-                //     label: const Text(
-                //       'Masuk dengan Google',
-                //       style: TextStyle(
-                //         fontSize: 16,
-                //         fontWeight: FontWeight.w600,
-                //         color: Color(0xFF1A1A1A),
-                //       ),
-                //     ),
-                //     style: OutlinedButton.styleFrom(
-                //       side: BorderSide(color: Colors.grey[300]!, width: 2),
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(12),
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 48),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
