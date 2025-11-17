@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:setor_mobil/screens/auth/login_screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:setor_mobil/screens/page/home_screen.dart';
 import 'package:setor_mobil/screens/page/profile_screen.dart';
 
@@ -14,50 +17,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedBottomNavIndex = 1;
+  final _storage = const FlutterSecureStorage();
 
-  final List<Map<String, dynamic>> _ongoingOrders = [
-    {
-      'id': 'ORD-001',
-      'vehicle': 'Honda Beat',
-      'type': 'Motorcycle',
-      'status': 'active',
-      'startDate': 'Nov 15 2025',
-      'endDate': 'Nov 17 2025',
-      'price': 'Rp 165.000',
-      'pickupTime': '10:00',
-      'location': 'Center Bandung',
-    },
-    {
-      'id': 'ORD-002',
-      'vehicle': 'Toyota Avanza',
-      'type': 'Car',
-      'status': 'pending',
-      'startDate': 'Nov 20 2025',
-      'endDate': 'Nov 22 2025',
-      'price': 'Rp 915.000',
-      'pickupTime': '10:00',
-      'location': 'Center Bandung',
-    },
-  ];
-
-  final List<Map<String, dynamic>> _completedOrders = [
-    {
-      'id': 'ORD-003',
-      'vehicle': 'Yamaha NMAX',
-      'type': 'Motorcycle',
-      'status': 'completed',
-      'startDate': 'Nov 10 2025',
-      'endDate': 'Nov 12 2025',
-      'price': 'Rp 285.000',
-      'pickupTime': '10:00',
-      'location': 'Center Bandung',
-    },
-  ];
+  List<Map<String, dynamic>> _ongoingOrders = [];
+  List<Map<String, dynamic>> _completedOrders = [];
+  bool _isLoading = true;
+  bool _hasError = false;
+  String _errorMessage = '';
+  bool _is404Error = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _fetchOrders();
   }
 
   @override
@@ -66,36 +39,173 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     super.dispose();
   }
 
-  void _handleLogout() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Logout'),
-        content: Text('Are you sure you want to logout?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
+  Future<void> _fetchOrders() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _hasError = false;
+        _errorMessage = '';
+        _is404Error = false;
+      });
+    }
+
+    try {
+      // Get token from secure storage
+      final token = await _storage.read(key: 'token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+
+      // Decode JWT to get user ID
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      final userId =
+          decodedToken['user_id'] ?? decodedToken['id'] ?? decodedToken['sub'];
+
+      if (userId == null) {
+        throw Exception('User ID not found in token');
+      }
+
+      // Fetch orders from API
+      final response = await http
+          .get(
+            Uri.parse('https://api.intracrania.com/orders/user/$userId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0066FF)),
-            child: Text('Logout'),
-          ),
-        ],
-      ),
-    );
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['status'] == 200 && data['data'] != null) {
+          final orders = (data['data'] as List).map((order) {
+            return {
+              'id': order['id'].toString(),
+              'created_at': order['created_at'],
+              'duration': order['duration'],
+              'pickup_time': order['pickup_time'],
+              'pickup_location': order['pickup_location'],
+              'price': order['price'],
+              'status': order['status'],
+              'car_id': order['car_id'],
+              'motorcycle_id': order['motorcycle_id'],
+              'rating': order['rating'],
+              'vehicle': _getVehicleName(order),
+              'type': order['car_id'] != null && order['car_id'] != 0
+                  ? 'Car'
+                  : 'Motorcycle',
+            };
+          }).toList();
+
+          // Separate into ongoing and completed
+          if (mounted) {
+            setState(() {
+              _ongoingOrders = orders
+                  .where(
+                    (order) =>
+                        order['status'] == 'Active' ||
+                        order['status'] == 'Pending',
+                  )
+                  .toList();
+
+              _completedOrders = orders
+                  .where(
+                    (order) =>
+                        order['status'] == 'Completed' ||
+                        order['status'] == 'Cancelled',
+                  )
+                  .toList();
+
+              _isLoading = false;
+            });
+          }
+        } else {
+          throw Exception(data['message'] ?? 'Invalid response format');
+        }
+      } else if (response.statusCode == 404) {
+        // Handle 404 - No orders found for user
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _hasError = false;
+            _is404Error = true;
+            _ongoingOrders = [];
+            _completedOrders = [];
+          });
+        }
+      } else {
+        throw Exception('Failed to load orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching orders: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+          _errorMessage = e.toString();
+          _is404Error = false;
+        });
+      }
+    }
+  }
+
+  String _getVehicleName(Map<String, dynamic> order) {
+    if (order['car_id'] != null && order['car_id'] != 0) {
+      return 'Car #${order['car_id']}';
+    } else if (order['motorcycle_id'] != null && order['motorcycle_id'] != 0) {
+      return 'Motorcycle #${order['motorcycle_id']}';
+    }
+    return 'Unknown Vehicle';
+  }
+
+  String _formatPrice(dynamic price) {
+    if (price == null) return 'Rp 0';
+    return 'Rp ${price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return 'N/A';
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${_getMonthName(date.month)} ${date.day}, ${date.year}';
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  String _formatTime(String? dateStr) {
+    if (dateStr == null) return 'N/A';
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 
   Color _getStatusColor(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'active':
         return Colors.green;
       case 'pending':
@@ -110,31 +220,163 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   }
 
   String _getStatusText(String status) {
-    switch (status) {
-      case 'active':
-        return 'Active';
-      case 'pending':
-        return 'Pending';
-      case 'completed':
-        return 'Completed';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
-    }
+    return status;
   }
 
   void _viewOrderDetail(Map<String, dynamic> order) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Order ${order['id']}'),
-        content: Text('Order detail will be displayed here'),
+        title: Text('Order #${order['id']}'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Vehicle: ${order['vehicle']}',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 8),
+              Text('Type: ${order['type']}', style: TextStyle(fontSize: 14)),
+              SizedBox(height: 8),
+              Text(
+                'Duration: ${order['duration']} days',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Price: ${_formatPrice(order['price'])}',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Pickup Location: ${order['pickup_location']}',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Pickup Time: ${_formatDate(order['pickup_time'])} at ${_formatTime(order['pickup_time'])}',
+                style: TextStyle(fontSize: 14),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Status: ${order['status']}',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              if (order['rating'] != null) ...[
+                SizedBox(height: 8),
+                Text(
+                  'Rating: ${order['rating']['Rating']} ⭐',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ],
+            ],
+          ),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red),
+            SizedBox(height: 16),
+            Text(
+              'Failed to load orders',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              _errorMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _fetchOrders,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF0066FF),
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Try Again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoOrdersWidget() {
+    return RefreshIndicator(
+      onRefresh: _fetchOrders,
+      color: Color(0xFF0066FF),
+      child: ListView(
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.calendar_today_outlined,
+                    size: 50,
+                    color: Colors.grey[400],
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'No orders yet',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Start by renting your first vehicle!',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF0066FF),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text('Rent Now'),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -149,78 +391,111 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         backgroundColor: Color(0xFF0066FF),
         elevation: 0,
         title: Text(
-          'My Order',
+          'My Orders',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          tabs: [
-            Tab(text: 'Ongoing (${_ongoingOrders.length})'),
-            Tab(text: 'Completed (${_completedOrders.length})'),
-          ],
-        ),
+        bottom:
+            _is404Error ||
+                (_ongoingOrders.isEmpty &&
+                    _completedOrders.isEmpty &&
+                    !_isLoading &&
+                    !_hasError)
+            ? null
+            : TabBar(
+                controller: _tabController,
+                indicatorColor: Colors.white,
+                indicatorWeight: 3,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
+                labelStyle: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                tabs: [
+                  Tab(text: 'Ongoing (${_ongoingOrders.length})'),
+                  Tab(text: 'Completed (${_completedOrders.length})'),
+                ],
+              ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildOrderList(_ongoingOrders),
-          _buildOrderList(_completedOrders),
-        ],
-      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)))
+          : _hasError
+          ? _buildErrorWidget()
+          : _is404Error || (_ongoingOrders.isEmpty && _completedOrders.isEmpty)
+          ? _buildNoOrdersWidget()
+          : RefreshIndicator(
+              onRefresh: _fetchOrders,
+              color: Color(0xFF0066FF),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildOrderList(_ongoingOrders),
+                  _buildOrderList(_completedOrders),
+                ],
+              ),
+            ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
   Widget _buildOrderList(List<Map<String, dynamic>> orders) {
     if (orders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      return RefreshIndicator(
+        onRefresh: _fetchOrders,
+        color: Color(0xFF0066FF),
+        child: ListView(
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
+            SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.calendar_today_outlined,
+                      size: 50,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No orders found',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Rent a vehicle!',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  ),
+                ],
               ),
-              child: Icon(
-                Icons.calendar_today_outlined,
-                size: 50,
-                color: Colors.grey[400],
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'No orders found',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Rent a vehicle!',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
           ],
         ),
       );
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.all(20),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        return _buildOrderCard(order);
-      },
+    return RefreshIndicator(
+      onRefresh: _fetchOrders,
+      color: Color(0xFF0066FF),
+      child: ListView.builder(
+        padding: EdgeInsets.all(20),
+        itemCount: orders.length,
+        itemBuilder: (context, index) {
+          final order = orders[index];
+          return _buildOrderCard(order);
+        },
+      ),
     );
   }
 
@@ -229,12 +504,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
     return Container(
       margin: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey[200]!, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -251,7 +528,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    order['id'],
+                    'Order #${order['id']}',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -261,8 +538,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      border: Border.all(color: statusColor.withOpacity(0.3)),
+                      color: statusColor.withValues(alpha: 0.1),
+                      border: Border.all(
+                        color: statusColor.withValues(alpha: 0.3),
+                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -287,8 +566,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Color(0xFF0066FF).withOpacity(0.1),
-                          Color(0xFF0066FF).withOpacity(0.05),
+                          Color(0xFF0066FF).withValues(alpha: 0.1),
+                          Color(0xFF0066FF).withValues(alpha: 0.05),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -326,7 +605,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                         ),
                         SizedBox(height: 4),
                         Text(
-                          order['price'],
+                          _formatPrice(order['price']),
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -351,15 +630,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   children: [
                     _buildInfoRow(
                       Icons.calendar_today,
-                      '${order['startDate']} - ${order['endDate']}',
+                      'Duration: ${order['duration']} days',
                     ),
                     SizedBox(height: 8),
                     _buildInfoRow(
                       Icons.access_time,
-                      'Pickup Time: ${order['pickupTime']}',
+                      'Pickup: ${_formatTime(order['pickup_time'])}',
                     ),
                     SizedBox(height: 8),
-                    _buildInfoRow(Icons.location_on, order['location']),
+                    _buildInfoRow(Icons.location_on, order['pickup_location']),
                   ],
                 ),
               ),
@@ -423,7 +702,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: Offset(0, -5),
           ),
@@ -453,19 +732,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         setState(() => _selectedBottomNavIndex = index);
 
         if (index == 0) {
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => HomeScreen()),
           );
         }
 
         if (index == 3) {
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => ProfileScreen()), 
+            MaterialPageRoute(builder: (context) => ProfileScreen()),
           );
         }
-
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
