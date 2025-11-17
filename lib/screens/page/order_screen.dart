@@ -364,10 +364,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
+                    // Use push instead of pushReplacement to maintain navigation stack
+                    Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => HomeScreen()),
-                    );
+                    ).then((_) {
+                      // When returning from HomeScreen, update the bottom nav to show Home as selected
+                      if (mounted) {
+                        setState(() {
+                          _selectedBottomNavIndex = 0;
+                        });
+                      }
+                    });
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF0066FF),
@@ -729,20 +737,23 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     final isSelected = _selectedBottomNavIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() => _selectedBottomNavIndex = index);
+        // Only handle navigation if we're not already on the target screen
+        if (_selectedBottomNavIndex != index) {
+          setState(() => _selectedBottomNavIndex = index);
 
-        if (index == 0) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomeScreen()),
-          );
-        }
-
-        if (index == 3) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => ProfileScreen()),
-          );
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileScreen()),
+            );
+          }
+          // For Order (index 1) and Favorite (index 2), we're already on Order screen
+          // so no navigation needed, just update the selected index
         }
       },
       child: Column(
