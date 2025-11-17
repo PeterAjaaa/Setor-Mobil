@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:intl/intl.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,53 +14,162 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _birthplaceController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _rtController = TextEditingController();
+  final _rwController = TextEditingController();
+  final _kelurahanController = TextEditingController();
+  final _kecamatanController = TextEditingController();
+  final _pekerjaanController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  DateTime? _selectedBirthdate;
+  String _selectedGender = 'Laki-laki';
+
+  final emailRegex = RegExp(
+    r"^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+  );
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _birthplaceController.dispose();
+    _addressController.dispose();
+    _rtController.dispose();
+    _rwController.dispose();
+    _kelurahanController.dispose();
+    _kecamatanController.dispose();
+    _pekerjaanController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectBirthdate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000, 1, 1),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Color(0xFF0066FF),
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedBirthdate) {
+      setState(() {
+        _selectedBirthdate = picked;
+      });
+    }
   }
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedBirthdate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please select your birthdate'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       setState(() => _isLoading = true);
 
-      // Simulate a network request or any async operation
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() => _isLoading = false);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration Successful')),
+      try {
+        // Format birthdate to RFC 3339 format with timezone (compatible with Go time.Time)
+        // Set time to noon to avoid any timezone edge cases
+        final birthdateWithTime = DateTime(
+          _selectedBirthdate!.year,
+          _selectedBirthdate!.month,
+          _selectedBirthdate!.day,
+          12,
+          0,
+          0, // Set to noon
         );
 
-        Navigator.pop(context);
+        // Format with explicit timezone offset
+        final offset = birthdateWithTime.timeZoneOffset;
+        final offsetSign = offset.isNegative ? '-' : '+';
+        final offsetHours = offset.inHours.abs().toString().padLeft(2, '0');
+        final offsetMinutes = (offset.inMinutes.abs() % 60).toString().padLeft(
+          2,
+          '0',
+        );
+
+        final birthdateStr =
+            '${DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(birthdateWithTime)}$offsetSign$offsetHours:$offsetMinutes';
+
+        final response = await http.post(
+          Uri.parse('https://api.intracrania.com/register'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'name': _nameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'password': _passwordController.text,
+            'birthdate': birthdateStr,
+            'birthplace': _birthplaceController.text.trim(),
+            'gender': _selectedGender,
+            'address': _addressController.text.trim(),
+            'rt': int.parse(_rtController.text),
+            'rw': int.parse(_rwController.text),
+            'kelurahan': _kelurahanController.text.trim(),
+            'kecamatan': _kecamatanController.text.trim(),
+            'pekerjaan': _pekerjaanController.text.trim(),
+          }),
+        );
+
+        final data = jsonDecode(response.body);
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Registration Successful! Please login.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Navigator.pop(context);
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message'] ?? 'Registration failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
 
-    // Future<void> _handleGoogleSignUp() async {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('Google Sign-Up Coming Soon!')),
-    //   );
-    // }
-
-    void _navigateToLogin() {
-      Navigator.pop(context);
-    }
-  
+  void _navigateToLogin() {
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Icon(
-                          Icons.person,
+                          Icons.person_add,
                           color: Colors.white,
                           size: 40,
                         ),
@@ -115,6 +227,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 SizedBox(height: 32),
 
+                // Personal Information Section
+                Text(
+                  'Personal Information',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+                SizedBox(height: 16),
+
                 _buildTextField(
                   label: 'Full Name',
                   controller: _nameController,
@@ -124,8 +247,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your full name';
                     }
-                    if (value.length < 3) {
-                      return 'Name must be at least 3 characters';
+                    if (value.isEmpty) {
+                      return 'Name must be at least 1 character';
                     }
                     return null;
                   },
@@ -142,26 +265,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email address';
                     }
-                    if (!value.contains('@')) {
+                    if (value.length < 6) {
+                      return 'Email must be at least 6 characters';
+                    }
+                    if (!emailRegex.hasMatch(value)) {
                       return 'Please enter a valid email address';
-                    }
-                    return null;
-                  },
-                ),
-
-                SizedBox(height: 16),
-
-                _buildTextField(
-                  label: 'Phone Number',
-                  controller: _phoneController,
-                  hintText: '08xx-xxxx-xxxx',
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your phone number';
-                    }
-                    if (value.length < 10) {
-                      return 'Phone number must be at least 10 characters';
                     }
                     return null;
                   },
@@ -172,7 +280,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _buildPasswordField(
                   label: 'Password',
                   controller: _passwordController,
-                  hintText: 'Password must be at least 6 characters',
+                  hintText: 'Password must be at least 8 characters',
                   obscureText: _obscurePassword,
                   onToggle: () {
                     setState(() {
@@ -183,8 +291,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters';
                     }
                     return null;
                   },
@@ -208,6 +316,244 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     }
                     if (value != _passwordController.text) {
                       return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 16),
+
+                // Birthdate picker
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Birthdate',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    InkWell(
+                      onTap: () => _selectBirthdate(context),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedBirthdate == null
+                                  ? 'Select your birthdate'
+                                  : DateFormat(
+                                      'dd MMMM yyyy',
+                                    ).format(_selectedBirthdate!),
+                              style: TextStyle(
+                                color: _selectedBirthdate == null
+                                    ? Colors.grey[400]
+                                    : Color(0xFF1A1A1A),
+                                fontSize: 16,
+                              ),
+                            ),
+                            Icon(Icons.calendar_today, color: Colors.grey[600]),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 16),
+
+                _buildTextField(
+                  label: 'Birthplace',
+                  controller: _birthplaceController,
+                  hintText: 'Enter your birthplace',
+                  keyboardType: TextInputType.text,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your birthplace';
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 16),
+
+                // Gender selector
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Gender',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    RadioGroup<String>(
+                      groupValue: _selectedGender,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedGender = value!;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: Text('Laki-laki'),
+                              value: 'Laki-laki',
+                              activeColor: Color(0xFF0066FF),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: Text('Perempuan'),
+                              value: 'Perempuan',
+                              activeColor: Color(0xFF0066FF),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 24),
+
+                // Address Section
+                Text(
+                  'Address Information',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+                SizedBox(height: 16),
+
+                _buildTextField(
+                  label: 'Address',
+                  controller: _addressController,
+                  hintText: 'Jl. Example No. 123',
+                  keyboardType: TextInputType.streetAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your address';
+                    }
+                    if (value.length < 9) {
+                      return 'Address must be at least 9 characters';
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        label: 'RT',
+                        controller: _rtController,
+                        hintText: 'RT',
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          final rt = int.tryParse(value);
+                          if (rt == null || rt < 1 || rt > 999) {
+                            return 'RT: 1-999';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: _buildTextField(
+                        label: 'RW',
+                        controller: _rwController,
+                        hintText: 'RW',
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          }
+                          final rw = int.tryParse(value);
+                          if (rw == null || rw < 1 || rw > 999) {
+                            return 'RW: 1-999';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 16),
+
+                _buildTextField(
+                  label: 'Kelurahan',
+                  controller: _kelurahanController,
+                  hintText: 'Enter your kelurahan',
+                  keyboardType: TextInputType.text,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your kelurahan';
+                    }
+                    if (value.length < 2) {
+                      return 'Kelurahan must be at least 2 characters';
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 16),
+
+                _buildTextField(
+                  label: 'Kecamatan',
+                  controller: _kecamatanController,
+                  hintText: 'Enter your kecamatan',
+                  keyboardType: TextInputType.text,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your kecamatan';
+                    }
+                    if (value.length < 2) {
+                      return 'Kecamatan must be at least 2 characters';
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 16),
+
+                _buildTextField(
+                  label: 'Occupation',
+                  controller: _pekerjaanController,
+                  hintText: 'Enter your occupation',
+                  keyboardType: TextInputType.text,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your occupation';
+                    }
+                    if (value.length < 2) {
+                      return 'Occupation must be at least 2 characters';
                     }
                     return null;
                   },
@@ -248,56 +594,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 SizedBox(height: 24),
 
-                // Row(
-                //   children: [
-                //     Expanded(child: Divider(color: Colors.grey[300])),
-                //     Padding(
-                //       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                //       child: Text(
-                //         'or',
-                //         style: TextStyle(
-                //           color: Colors.grey[600],
-                //           fontSize: 14,
-                //         ),
-                //       ),
-                //     ),
-                //     Expanded(child: Divider(color: Colors.grey[300])),
-                //   ],
-                // ),
-                SizedBox(height: 24),
-
-                // SizedBox(
-                //   height: 56,
-                //   child: OutlineButton.icon(
-                //     onPressed: _handleGoogleSignUp,
-                //     icon: Image.network(
-                //       'https://www.google.com/favicon.ico',
-                //       width: 20,
-                //       height: 20,
-                //     ),
-                //     label: Text(
-                //       'Sign Up with Google',
-                //       style: TextStyle(
-                //         fontSize: 16,
-                //         fontWeight: FontWeight.w600,
-                //         color: Color(0xFF1A1A1A),
-                //       ),
-                //     ),
-                //     style: OutlineButton.styleFrom(
-                //       side: BorderSide(color: Colors.grey[300]!, width: 2),
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(12),
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                SizedBox(height: 24),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Already have an account?',
+                      'Already have an account? ',
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     TextButton(
@@ -318,6 +619,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
+                SizedBox(height: 24),
               ],
             ),
           ),
