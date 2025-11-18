@@ -50,18 +50,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return '';
   }
 
-  Future<void> _fetchUserProfile() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchUserProfile({bool isRefresh = false}) async {
+    // Only show the full screen loader if it's NOT a pull-to-refresh action
+    if (!isRefresh) {
+      setState(() => _isLoading = true);
+    }
 
     try {
-      // Get the JWT token from secure storage
       final token = await _storage.read(key: 'token');
 
       if (token == null || token.isEmpty) {
         throw Exception('No authentication token found');
       }
 
-      // Decode JWT to get user_id
       Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
       final userId = decodedToken['user_id'];
 
@@ -69,7 +70,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         throw Exception('User ID not found in token');
       }
 
-      // Fetch user profile
       final response = await http.get(
         Uri.parse('https://api.intracrania.com/users/$userId'),
         headers: {
@@ -84,14 +84,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (responseData['status'] == 200 && responseData['data'] != null) {
           final userData = responseData['data'];
 
-          setState(() {
-            _user = {
-              'name': userData['name'] ?? '',
-              'email': userData['email'] ?? decodedToken['email'] ?? '',
-              'avatar': _generateAvatar(userData['name'] ?? ''),
-            };
-            _isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              _user = {
+                'name': userData['name'] ?? '',
+                'email': userData['email'] ?? decodedToken['email'] ?? '',
+                'avatar': _generateAvatar(userData['name'] ?? ''),
+              };
+              _isLoading = false;
+            });
+          }
         } else {
           throw Exception('Invalid response format');
         }
@@ -100,9 +102,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       log('Error fetching user profile: $e');
-      setState(() => _isLoading = false);
 
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load profile: $e'),
@@ -209,223 +211,240 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[50], // Default scaffold background
       body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(20, 20, 20, 60),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0066FF), Color(0xFF0052CC)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Text(
-                'My Profile',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-
-            if (_isLoading)
-              Expanded(
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF0066FF)),
-                ),
-              )
-            else
-              Expanded(
-                child: SingleChildScrollView(
+        child: RefreshIndicator(
+          color: const Color(0xFF0066FF), // Spinner color
+          onRefresh: () async {
+            await _fetchUserProfile(isRefresh: true);
+          },
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints
+                        .maxHeight, // Ensures full screen height for scroll
+                  ),
                   child: Column(
                     children: [
-                      Transform.translate(
-                        offset: Offset(0, -40),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.grey[200]!,
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 20,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            padding: EdgeInsets.all(20),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 70,
-                                      height: 70,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            Color(0xFF0066FF),
-                                            Color(0xFF0052CC),
-                                          ],
-                                        ),
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                            blurRadius: 12,
-                                            offset: Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          _user['avatar'] ?? '',
-                                          style: TextStyle(
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            _user['name'] ?? '',
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF1A1A1A),
-                                            ),
-                                          ),
-                                          // SizedBox(height: 4),
-                                          // Text(
-                                          //   'Member since ${_user['memberSince']}',
-                                          //   style: TextStyle(
-                                          //     fontSize: 13,
-                                          //     color: Colors.grey[600],
-                                          //   ),
-                                          // ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                SizedBox(height: 20),
-                                Divider(color: Colors.grey[200], height: 1),
-                                SizedBox(height: 16),
-
-                                _buildInfoRow(
-                                  Icons.email_outlined,
-                                  'Email',
-                                  _user['email'] ?? '',
-                                  Colors.blue,
-                                ),
-                                // SizedBox(height: 12),
-                                // _buildInfoRow(
-                                //   Icons.phone_outlined,
-                                //   'Phone',
-                                //   _user['phone']!,
-                                //   Colors.green,
-                                // ),
-                                // SizedBox(height: 12),
-                                // _buildInfoRow(
-                                //   Icons.location_on_outlined,
-                                //   'Location',
-                                //   _user['location']!,
-                                //   Colors.orange,
-                                // ),
-                              ],
-                            ),
+                      // Blue Header (same as previous layout, but now inside the scroll view)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 60),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF0066FF), Color(0xFF0052CC)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: const Text(
+                          'My Profile',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ),
 
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      // This is where the white content starts.
+                      // The Transform.translate moves the card UP into the blue header.
+                      if (_isLoading)
+                        Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 50,
+                          ), // Add some space for the spinner
+                          child: const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF0066FF),
+                            ),
+                          ),
+                        )
+                      else
+                        Column(
                           children: [
-                            Material(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                              child: InkWell(
-                                onTap: _handleLogout,
-                                borderRadius: BorderRadius.circular(12),
+                            Transform.translate(
+                              offset: const Offset(
+                                0,
+                                -40,
+                              ), // Move the card up by 40 pixels
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
                                 child: Container(
-                                  padding: EdgeInsets.all(16),
                                   decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: Colors.red.shade100,
+                                      color: Colors.grey[200]!,
                                       width: 2,
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.03,
+                                        ),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  child: Row(
+                                  padding: const EdgeInsets.all(20),
+                                  child: Column(
                                     children: [
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: Colors.red.shade100,
-                                          borderRadius: BorderRadius.circular(
-                                            10,
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 70,
+                                            height: 70,
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                colors: [
+                                                  Color(0xFF0066FF),
+                                                  Color(0xFF0052CC),
+                                                ],
+                                              ),
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.3),
+                                                  blurRadius: 12,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                _user['avatar'] ?? '',
+                                                style: const TextStyle(
+                                                  fontSize: 28,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                        child: Icon(
-                                          Icons.logout,
-                                          color: Colors.red,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      SizedBox(width: 16),
-                                      Expanded(
-                                        child: Text(
-                                          'Logout',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.red,
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  _user['name'] ?? '',
+                                                  style: const TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF1A1A1A),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
+                                        ],
                                       ),
-                                      Icon(
-                                        Icons.chevron_right,
-                                        color: Colors.red,
-                                        size: 20,
+                                      const SizedBox(height: 20),
+                                      Divider(
+                                        color: Colors.grey[200],
+                                        height: 1,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildInfoRow(
+                                        Icons.email_outlined,
+                                        'Email',
+                                        _user['email'] ?? '',
+                                        Colors.blue,
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
                             ),
-                            SizedBox(height: 20),
+
+                            // The Logout Button Section
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Material(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: InkWell(
+                                      onTap: _handleLogout,
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.red.shade100,
+                                            width: 2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: Colors.red.shade100,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: const Icon(
+                                                Icons.logout,
+                                                color: Colors.red,
+                                                size: 20,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            const Expanded(
+                                              child: Text(
+                                                'Logout',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.red,
+                                              size: 20,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                              ),
+                            ),
+                            // This SizedBox is crucial: it creates the "extra" space at the bottom
+                            // so you can pull down the content and reveal more of the blue header.
+                            // Adjust its height as needed to control how much "pull" space there is.
+                            SizedBox(
+                              height: constraints.maxHeight * 0.2,
+                            ), // Example: 20% of remaining height
                           ],
                         ),
-                      ),
                     ],
                   ),
                 ),
-              ),
-          ],
+              );
+            },
+          ),
         ),
       ),
       bottomNavigationBar: _buildBottomNav(),
