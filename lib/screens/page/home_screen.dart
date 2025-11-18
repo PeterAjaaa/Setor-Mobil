@@ -268,6 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Left side: Location
               Row(
                 children: [
                   Icon(Icons.location_on, color: Colors.white, size: 20),
@@ -281,8 +282,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+              // Right side: Profile Icon (Bell Icon REMOVED from this Row)
               Row(
                 children: [
+                  // This IconButton for the bell icon is REMOVED
+                  /*
                   IconButton(
                     onPressed: () {},
                     icon: Icon(
@@ -290,6 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.white,
                     ),
                   ),
+                  */
                   IconButton(
                     onPressed: () {
                       Navigator.push(
@@ -308,6 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           SizedBox(height: 16),
 
+          // Search Bar
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
