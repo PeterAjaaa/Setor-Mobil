@@ -11,7 +11,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _selectedBottomNavIndex = 3;
+  int _selectedBottomNavIndex = 2; // Changed from 3 to 2
   final Map<String, dynamic> _user = {
     'name': 'John Doe',
     'email': 'john@gmail.com',
@@ -116,12 +116,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _handleMenuTap(String menu) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('$menu coming soon!')));
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,7 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     border: Border.all(color: Colors.grey[200]!, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         blurRadius: 20,
                         offset: Offset(0, 2),
                       ),
@@ -176,12 +170,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             height: 70,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xFF00666FF), Color(0xFF0052CC)],
+                                colors: [Color(0xff00666f), Color(0xFF0052CC)],
                               ),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
+                                  color: Colors.black.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: Offset(0, 4),
                                 ),
@@ -376,7 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: color, size: 20),
@@ -432,7 +426,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: color, size: 20),
@@ -448,11 +442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey[600],
-                  size: 20,
-                ),
+                Icon(Icons.chevron_right, color: Colors.grey[600], size: 20),
               ],
             ),
           ),
@@ -461,13 +451,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
- Widget _buildBottomNav() {
+  Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: Offset(0, -5),
           ),
@@ -481,8 +471,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               _buildNavItem(Icons.home, 'Home', 0),
               _buildNavItem(Icons.calendar_today_outlined, 'Order', 1),
-              _buildNavItem(Icons.favorite_outline, 'Favorite', 2),
-              _buildNavItem(Icons.person_outline, 'Profile', 3),
+              _buildNavItem(Icons.person_outline, 'Profile', 2),
             ],
           ),
         ),
@@ -494,26 +483,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isSelected = _selectedBottomNavIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() => _selectedBottomNavIndex = index);
+        if (index == 2) {
+          // Already on Profile screen, just update state
+          setState(() => _selectedBottomNavIndex = index);
+          return;
+        }
 
         if (index == 0) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => HomeScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => HomeScreen()),
           );
         }
 
         if (index == 1) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => OrderHistoryScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => OrderHistoryScreen()),
           );
         }
-
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

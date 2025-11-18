@@ -724,8 +724,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
             children: [
               _buildNavItem(Icons.home, 'Home', 0),
               _buildNavItem(Icons.calendar_today_outlined, 'Order', 1),
-              _buildNavItem(Icons.favorite_outline, 'Favorite', 2),
-              _buildNavItem(Icons.person_outline, 'Profile', 3),
+              _buildNavItem(Icons.person_outline, 'Profile', 2),
             ],
           ),
         ),
@@ -746,7 +745,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               context,
               MaterialPageRoute(builder: (context) => HomeScreen()),
             );
-          } else if (index == 3) {
+          } else if (index == 2) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => ProfileScreen()),

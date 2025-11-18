@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:setor_mobil/screens/auth/login_screen.dart';
 import 'package:setor_mobil/screens/page/order_screen.dart';
 import 'package:setor_mobil/screens/page/profile_screen.dart';
 import 'package:setor_mobil/screens/page/vehicle_detail_screen.dart';
@@ -207,34 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _handleLogout() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Logout'),
-        content: Text('Are you sure you want to logout?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0066FF)),
-            child: Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-
   List<Map<String, dynamic>> get _filteredVehicles {
     if (_selectedCategory == 'All') return _vehicles;
     return _vehicles.where((v) => v['type'] == _selectedCategory).toList();
@@ -320,7 +291,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   IconButton(
-                    onPressed: _handleLogout,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfileScreen(),
+                        ),
+                      );
+                    },
                     icon: Icon(Icons.person_outlined, color: Colors.white),
                   ),
                 ],
@@ -762,8 +740,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildNavItem(Icons.home, 'Home', 0),
               _buildNavItem(Icons.calendar_today_outlined, 'Order', 1),
-              _buildNavItem(Icons.favorite_outline, 'Favorite', 2),
-              _buildNavItem(Icons.person_outline, 'Profile', 3),
+              _buildNavItem(Icons.person_outline, 'Profile', 2),
             ],
           ),
         ),
@@ -775,7 +752,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final isSelected = _selectedBottomNavIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() => _selectedBottomNavIndex = index);
+        if (index == 0) {
+          setState(() => _selectedBottomNavIndex = index);
+          return;
+        }
 
         if (index == 1) {
           Navigator.push(
@@ -784,7 +764,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        if (index == 3) {
+        if (index == 2) {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => ProfileScreen()),
