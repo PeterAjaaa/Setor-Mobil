@@ -161,7 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onPressed: () => Navigator.pop(dialogContext),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
-                        color: colorScheme.outline.withOpacity(0.3),
+                        color: colorScheme.outline.withValues(alpha: 0.3),
                         width: 2,
                       ),
                       shape: RoundedRectangleBorder(
@@ -245,8 +245,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           gradient: LinearGradient(
                             colors: [
                               colorScheme.primary,
-                              colorScheme.primary.withOpacity(
-                                0.8,
+                              colorScheme.primary.withValues(
+                                alpha: 0.8,
                               ), // Slight variation
                             ],
                             begin: Alignment.topLeft,
@@ -287,15 +287,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: colorScheme.surface,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: colorScheme.outline.withOpacity(
-                                        0.1,
+                                      color: colorScheme.outline.withValues(
+                                        alpha: 0.1,
                                       ),
                                       width: 2,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: colorScheme.shadow.withOpacity(
-                                          0.05,
+                                        color: colorScheme.shadow.withValues(
+                                          alpha: 0.05,
                                         ),
                                         blurRadius: 20,
                                         offset: const Offset(0, 2),
@@ -321,7 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               boxShadow: [
                                                 BoxShadow(
                                                   color: colorScheme.shadow
-                                                      .withOpacity(0.3),
+                                                      .withValues(alpha: 0.3),
                                                   blurRadius: 12,
                                                   offset: const Offset(0, 4),
                                                 ),
@@ -381,8 +381,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Padding(
                               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                               child: Material(
-                                color: colorScheme.errorContainer.withOpacity(
-                                  0.2,
+                                color: colorScheme.errorContainer.withValues(
+                                  alpha: 0.2,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 child: InkWell(
@@ -392,8 +392,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       border: Border.all(
-                                        color: colorScheme.error.withOpacity(
-                                          0.3,
+                                        color: colorScheme.error.withValues(
+                                          alpha: 0.3,
                                         ),
                                         width: 2,
                                       ),
@@ -467,7 +467,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 20),
@@ -507,7 +507,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: Offset(0, -5),
           ),
@@ -544,7 +544,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Selected = Primary, Unselected = OnSurfaceVariant (greyish)
     final color = isSelected
         ? colorScheme.primary
-        : colorScheme.onSurfaceVariant.withOpacity(0.5);
+        : colorScheme.onSurfaceVariant.withValues(alpha: 0.5);
 
     return GestureDetector(
       onTap: () {

@@ -224,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       // Use the color scheme's background color (e.g., colorScheme.background or colorScheme.surface)
       // The default Scaffold background usually adapts well, but setting it explicitly can be helpful.
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -352,15 +352,15 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Icon(
                   Icons.search,
-                  color: colorScheme.onSurface.withOpacity(0.4),
+                  color: colorScheme.onSurface.withValues(alpha: 0.4),
                 ), // Use onSurface with opacity
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Search vehicles',
                     style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(
-                        0.4,
+                      color: colorScheme.onSurface.withValues(
+                        alpha: 0.4,
                       ), // Use onSurface with opacity
                       fontSize: 14,
                     ),
@@ -386,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 18,
               fontWeight: FontWeight.bold,
               // Use onBackground/onSurface for general text
-              color: colorScheme.onBackground,
+              color: colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 12),
@@ -432,8 +432,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             promo['subtitle'],
                             style: TextStyle(
-                              color: Colors.white.withOpacity(
-                                0.9,
+                              color: Colors.white.withValues(
+                                alpha: 0.9,
                               ), // Colors.white works well on the gradient
                               fontSize: 14,
                             ),
@@ -482,8 +482,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Use the primary color for the active indicator
                   color: index == _currentPromoIndex
                       ? colorScheme.primary
-                      : colorScheme.onSurface.withOpacity(
-                          0.3,
+                      : colorScheme.onSurface.withValues(
+                          alpha: 0.3,
                         ), // Light grey equivalent on any background
                   borderRadius: BorderRadius.circular(3),
                 ),
@@ -506,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: colorScheme.onBackground, // Use onBackground
+              color: colorScheme.onSurface, // Use onBackground
             ),
           ),
           SizedBox(height: 12),
@@ -523,8 +523,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Use primary for selected, surface/secondaryContainer for unselected
                     backgroundColor: isSelected
                         ? colorScheme.primary
-                        : colorScheme.secondaryContainer.withOpacity(
-                            0.3,
+                        : colorScheme.secondaryContainer.withValues(
+                            alpha: 0.3,
                           ), // A light grey/container background
                     foregroundColor: isSelected
                         ? colorScheme
@@ -560,14 +560,14 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(
                 Icons.directions_car_outlined,
                 size: 64,
-                color: colorScheme.onBackground.withOpacity(0.4),
+                color: colorScheme.onSurface.withValues(alpha: 0.4),
               ),
               SizedBox(height: 16),
               Text(
                 'No vehicles available',
                 style: TextStyle(
                   fontSize: 16,
-                  color: colorScheme.onBackground.withOpacity(0.6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -589,7 +589,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onBackground, // Use onBackground
+                  color: colorScheme.onSurface, // Use onBackground
                 ),
               ),
               TextButton.icon(
@@ -643,12 +643,12 @@ class _HomeScreenState extends State<HomeScreen> {
         color: colorScheme.surface,
         border: Border.all(
           // Use outline or a subtle color for the border
-          color: colorScheme.outline.withOpacity(0.3),
+          color: colorScheme.outline.withValues(alpha: 0.3),
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: Offset(0, 2),
           ),
@@ -664,8 +664,8 @@ class _HomeScreenState extends State<HomeScreen> {
               // Use a gradient based on the primary color for a subtle effect
               gradient: LinearGradient(
                 colors: [
-                  colorScheme.primary.withOpacity(0.1),
-                  colorScheme.surface.withOpacity(0.05),
+                  colorScheme.primary.withValues(alpha: 0.1),
+                  colorScheme.surface.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -705,8 +705,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   vehicle['type'],
                   style: TextStyle(
                     fontSize: 12,
-                    color: colorScheme.onSurface.withOpacity(
-                      0.6,
+                    color: colorScheme.onSurface.withValues(
+                      alpha: 0.6,
                     ), // Secondary text color
                   ),
                 ),
@@ -747,7 +747,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             'No rating',
                             style: TextStyle(
                               fontSize: 11,
-                              color: colorScheme.onSurface.withOpacity(0.4),
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ),
                   ],
@@ -801,7 +803,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.3),
+            color: colorScheme.shadow.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: Offset(0, -5),
           ),
@@ -866,7 +868,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Selected color is primary, unselected is onSurface with opacity
             color: isSelected
                 ? colorScheme.primary
-                : colorScheme.onSurface.withOpacity(0.4),
+                : colorScheme.onSurface.withValues(alpha: 0.4),
             size: 24,
           ),
           SizedBox(height: 4),
@@ -876,7 +878,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // Selected color is primary, unselected is onSurface with opacity
               color: isSelected
                   ? colorScheme.primary
-                  : colorScheme.onSurface.withOpacity(0.4),
+                  : colorScheme.onSurface.withValues(alpha: 0.4),
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
             ),

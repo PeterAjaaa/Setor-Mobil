@@ -168,7 +168,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colorScheme.outline.withOpacity(0.3),
+                  color: colorScheme.outline.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -233,9 +233,11 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         // Uses Primary Container (Light Blue in light mode, Dark Teal in dark mode)
-                        color: colorScheme.primaryContainer.withOpacity(0.4),
+                        color: colorScheme.primaryContainer.withValues(
+                          alpha: 0.4,
+                        ),
                         border: Border.all(
-                          color: colorScheme.primary.withOpacity(0.2),
+                          color: colorScheme.primary.withValues(alpha: 0.2),
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -268,7 +270,9 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         // Slightly darker/lighter background for separation
-                        color: colorScheme.surfaceVariant.withOpacity(0.3),
+                        color: colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.3,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -342,7 +346,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                   color: colorScheme.surface,
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.shadow.withOpacity(0.1),
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
                       blurRadius: 8,
                       offset: const Offset(0, -5),
                     ),
@@ -402,7 +406,9 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
+              border: Border.all(
+                color: colorScheme.outline.withValues(alpha: 0.5),
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -448,7 +454,9 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
+              border: Border.all(
+                color: colorScheme.outline.withValues(alpha: 0.5),
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(

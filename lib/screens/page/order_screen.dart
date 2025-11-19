@@ -17,7 +17,7 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int _selectedBottomNavIndex = 1; // Order is index 1
+  final int _selectedBottomNavIndex = 1; // Order is index 1
   final _storage = const FlutterSecureStorage();
 
   List<Map<String, dynamic>> _ongoingOrders = [];
@@ -272,7 +272,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 controller: _tabController,
                 indicatorColor: colorScheme.onPrimary, // Uses global onPrimary color
                 labelColor: colorScheme.onPrimary,
-                unselectedLabelColor: colorScheme.onPrimary.withOpacity(0.7),
+                unselectedLabelColor: colorScheme.onPrimary.withValues(alpha: 0.7),
                 tabs: [
                   Tab(text: 'Ongoing (${_ongoingOrders.length})'),
                   Tab(text: 'Completed (${_completedOrders.length})'),
@@ -356,10 +356,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -379,8 +379,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                    color: statusColor.withValues(alpha: 0.1),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -446,7 +446,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.1),
+            color: colorScheme.shadow.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, -5),
           ),
@@ -471,7 +471,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   Widget _buildNavItem(IconData icon, String label, int index, ColorScheme colorScheme) {
     final isSelected = _selectedBottomNavIndex == index;
     // Use global Primary color for selected, global onSurfaceVariant for unselected
-    final color = isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.6);
+    final color = isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant.withValues(alpha: 0.6);
 
     return GestureDetector(
       onTap: () {
