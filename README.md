@@ -136,3 +136,6 @@ Just ping the other dev in the PR or message us directly. Don’t push to `dev` 
 ## TODO
 
 * Change rating calculation from client-side calculation to data from API
+* Add OTP screens
+* Implement the search bar in home screen
+* Implement correct 'number of order' in the rating system in the vehicle detail screen
