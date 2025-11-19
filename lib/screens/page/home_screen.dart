@@ -2,12 +2,15 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
 import 'package:setor_mobil/screens/page/order_screen.dart';
 import 'package:setor_mobil/screens/page/profile_screen.dart';
 import 'package:setor_mobil/screens/page/vehicle_detail_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+
+import 'package:setor_mobil/theme_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -214,7 +217,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -285,16 +287,21 @@ class _HomeScreenState extends State<HomeScreen> {
               // Right side: Profile Icon (Bell Icon REMOVED from this Row)
               Row(
                 children: [
-                  // This IconButton for the bell icon is REMOVED
-                  /*
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
-                    ),
+                  Consumer<ThemeProvider>(
+                    builder: (context, themeProvider, child) {
+                      return IconButton(
+                        onPressed: () {
+                          themeProvider.toggleTheme();
+                        },
+                        icon: Icon(
+                          themeProvider.themeMode == ThemeMode.light
+                              ? Icons.dark_mode
+                              : Icons.light_mode,
+                          color: Colors.white,
+                        ),
+                      );
+                    },
                   ),
-                  */
                   IconButton(
                     onPressed: () {
                       Navigator.push(
@@ -349,7 +356,9 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Color(0xFF1A1A1A),
             ),
           ),
           SizedBox(height: 12),
@@ -464,7 +473,9 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Color(0xFF1A1A1A),
             ),
           ),
           SizedBox(height: 12),
@@ -542,7 +553,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Color(0xFF1A1A1A),
                 ),
               ),
               TextButton.icon(
@@ -585,10 +598,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVehicleCard(Map<String, dynamic> vehicle) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey[200]!),
+        color: isDark ? Color(0xFF1E1E1E) : Colors.white,
+        border: Border.all(
+          color: isDark ? Color(0xFF2A2A2A) : Colors.grey[200]!,
+        ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -638,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color: Color(0xFF1A1A1A),
+                    color: isDark ? Colors.white : Color(0xFF1A1A1A),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -727,12 +744,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBottomNav() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0xFF1E1E1E) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 8,
             offset: Offset(0, -5),
           ),
