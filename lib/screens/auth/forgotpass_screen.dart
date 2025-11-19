@@ -196,7 +196,7 @@ class _ForgotpassScreenState extends State<ForgotpassScreen> {
                 backgroundColor: Color(0xFF0066FF),
                 foregroundColor: Colors.white,
                 elevation: 2,
-                shadowColor: Color(0xFF0066FF).withOpacity(0.3),
+                shadowColor: Color(0xFF0066FF).withValues(alpha: 0.3),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -328,7 +328,7 @@ class _ForgotpassScreenState extends State<ForgotpassScreen> {
               backgroundColor: Color(0xFF0066FF),
               foregroundColor: Colors.white,
               elevation: 2,
-              shadowColor: Color(0xFF0066FF).withOpacity(0.3),
+              shadowColor: Color(0xFF0066FF).withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

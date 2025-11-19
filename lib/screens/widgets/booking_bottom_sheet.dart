@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 class BookingBottomSheet extends StatefulWidget {
   final Map<String, dynamic> vehicle;
 
-  const BookingBottomSheet({Key? key, required this.vehicle}) : super(key: key);
+  const BookingBottomSheet({super.key, required this.vehicle});
 
   @override
   State<BookingBottomSheet> createState() => _BookingBottomSheetState();
@@ -14,7 +14,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(Duration(days: 2));
   TimeOfDay _pickupTime = TimeOfDay(hour: 10, minute: 0);
-  TimeOfDay _returnTime = TimeOfDay(hour: 10, minute: 0);
+  final TimeOfDay _returnTime = TimeOfDay(hour: 10, minute: 0);
 
   final int _serviceFee = 5000;
   final int _insurance = 10000;
@@ -114,28 +114,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     }
   }
 
-  Future<void> _selectReturn() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _returnTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Color(0xFF0066FF),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null && picked != _returnTime) {
-      setState(() => _returnTime = picked);
-    }
-  }
 
   String _formatCurrency(int amount) {
     return NumberFormat.currency(
@@ -371,7 +349,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 8,
                       offset: Offset(0, -5),
                     ),
