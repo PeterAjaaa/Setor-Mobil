@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:setor_mobil/screens/page/home_screen.dart';
+import 'package:setor_mobil/screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -108,7 +108,8 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
 
-      home: const HomeScreen(),
+      // Changed from HomeScreen to SplashScreen
+      home: const SplashScreen(),
     );
   }
 }
