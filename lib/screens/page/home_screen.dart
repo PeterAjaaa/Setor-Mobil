@@ -2,7 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:setor_mobil/main.dart'; // <--- IMPORTANT: Import where MyApp is defined
-import 'package:setor_mobil/screens/page/order_screen.dart' hide MainAxisAlignment;
+import 'package:setor_mobil/screens/page/order_screen.dart';
 import 'package:setor_mobil/screens/page/profile_screen.dart';
 import 'package:setor_mobil/screens/page/vehicle_detail_screen.dart';
 import 'package:http/http.dart' as http;
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'brand': car['brand'],
                   'model': car['model'],
                   'type': 'Car',
-                  'price': 'Rp ${_formatPrice(car['price_per_day'])}/day',
+                  'price': 'Rp. ${_formatPrice(car['price_per_day'])} /day',
                   'pricePerDay': car['price_per_day'],
                   'rating': _calculateAverageRating(car['ratings']),
                   'year': car['year'],
@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'brand': moto['brand'],
                   'model': moto['model'],
                   'type': 'Motorcycle',
-                  'price': 'Rp ${_formatPrice(moto['price_per_day'])}/day',
+                  'price': 'Rp. ${_formatPrice(moto['price_per_day'])}/day',
                   'pricePerDay': moto['price_per_day'],
                   'rating': _calculateAverageRating(moto['ratings']),
                   'year': moto['year'],
