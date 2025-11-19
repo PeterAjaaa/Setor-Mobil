@@ -86,8 +86,8 @@ class _MyAppState extends State<MyApp> {
             0xFFEEEEEE,
           ), // Off-white text is softer than pure white
           // 3. Change the "Background" (The space behind cards) to the darker Slate
-          background: _darkBackground,
-          onBackground: const Color(0xFFEEEEEE),
+          surfaceBright: _darkBackground,
+          onSurfaceVariant: const Color(0xFFEEEEEE),
 
           // Optional: Tweak the outline color so borders aren't too harsh
           outline: Colors.grey.shade700,
