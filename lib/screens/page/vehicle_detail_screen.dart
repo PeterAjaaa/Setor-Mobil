@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:setor_mobil/screens/widgets/booking_bottom_sheet.dart';
 
-
 class VehicleDetailScreen extends StatelessWidget {
   final Map<String, dynamic> vehicle;
 
-  const VehicleDetailScreen({Key? key, required this.vehicle})
-    : super(key: key);
+  const VehicleDetailScreen({super.key, required this.vehicle});
 
   void _showBookingBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -39,7 +37,7 @@ class VehicleDetailScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: Offset(0, 2),
                         ),
@@ -58,8 +56,8 @@ class VehicleDetailScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Color(0xFF0066FF).withOpacity(0.1),
-                          Color(0xFF1A1A1A).withOpacity(0.05),
+                          Color(0xFF0066FF).withValues(alpha: 0.1),
+                          Color(0xFF1A1A1A).withValues(alpha: 0.05),
                         ],
                       ),
                     ),
@@ -103,7 +101,9 @@ class VehicleDetailScreen extends StatelessWidget {
                                   vehicle['type'],
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : Colors.grey[600],
                                   ),
                                 ),
                               ],
@@ -116,13 +116,13 @@ class VehicleDetailScreen extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.amber.withOpacity(0.2)
+                                  ? Colors.amber.withValues(alpha: 0.2)
                                   : Colors.amber.shade50,
                               border: Border.all(
-                                color: isDark 
-                                    ? Colors.amber.withOpacity(0.3)
+                                color: isDark
+                                    ? Colors.amber.withValues(alpha: 0.3)
                                     : Colors.amber.shade100,
-                                ),
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -141,7 +141,9 @@ class VehicleDetailScreen extends StatelessWidget {
                                   ' (124)',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                    color: isDark
+                                        ? Colors.grey[400]
+                                        : Colors.grey[600],
                                   ),
                                 ),
                               ],
@@ -156,14 +158,17 @@ class VehicleDetailScreen extends StatelessWidget {
                         padding: EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: isDark 
-                            ? [Color(0xFF1E3ABA).withOpacity(0.3), Color(0xFF1E40AF).withOpacity(0.3)]
-                            : [Colors.blue.shade50, Colors.blue.shade100],
+                            colors: isDark
+                                ? [
+                                    Color(0xFF1E3ABA).withValues(alpha: 0.3),
+                                    Color(0xFF1E40AF).withValues(alpha: 0.3),
+                                  ]
+                                : [Colors.blue.shade50, Colors.blue.shade100],
                           ),
                           border: Border.all(
-                            color: isDark 
-                            ? Color(0xFF1E40AF).withOpacity(0.5) 
-                            : Colors.blue.shade200,
+                            color: isDark
+                                ? Color(0xFF1E40AF).withValues(alpha: 0.5)
+                                : Colors.blue.shade200,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(16),
@@ -175,9 +180,9 @@ class VehicleDetailScreen extends StatelessWidget {
                               'Rental Price',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: isDark 
-                                ? Colors.grey[400] 
-                                : Colors.grey[600],
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
                               ),
                             ),
                             SizedBox(height: 4),
@@ -199,9 +204,9 @@ class VehicleDetailScreen extends StatelessWidget {
                                     '/ day',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: isDark 
-                                      ? Colors.grey[400] 
-                                      : Colors.grey[600],
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -219,9 +224,7 @@ class VehicleDetailScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: isDark 
-                          ? Colors.white 
-                          : Color(0xFF1A1A1A),
+                          color: isDark ? Colors.white : Color(0xFF1A1A1A),
                         ),
                       ),
                       SizedBox(height: 8),
@@ -229,9 +232,7 @@ class VehicleDetailScreen extends StatelessWidget {
                         'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                         style: TextStyle(
                           fontSize: 14,
-                          color: isDark 
-                          ? Colors.grey[400] 
-                          : Colors.grey[700],
+                          color: isDark ? Colors.grey[400] : Colors.grey[700],
                           height: 1.5,
                         ),
                       ),
@@ -243,9 +244,7 @@ class VehicleDetailScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: isDark 
-                          ? Colors.white 
-                          : Color(0xFF1A1A1A),
+                          color: isDark ? Colors.white : Color(0xFF1A1A1A),
                         ),
                       ),
                       SizedBox(height: 12),
@@ -267,7 +266,9 @@ class VehicleDetailScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isDark ? Color(0xFF1E1E1E) : Colors.white,
                           border: Border.all(
-                            color: isDark ? Color(0xFF2A2A2A) : Colors.grey[200]!,
+                            color: isDark
+                                ? Color(0xFF2A2A2A)
+                                : Colors.grey[200]!,
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(16),
@@ -280,7 +281,7 @@ class VehicleDetailScreen extends StatelessWidget {
                               height: 40,
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? Color(0xFF0066FF).withOpacity(0.2)
+                                    ? Color(0xFF0066FF).withValues(alpha: 0.2)
                                     : Colors.blue.shade100,
                                 shape: BoxShape.circle,
                               ),
@@ -300,7 +301,9 @@ class VehicleDetailScreen extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark ? Colors.white : Color(0xFF1A1A1A),
+                                      color: isDark
+                                          ? Colors.white
+                                          : Color(0xFF1A1A1A),
                                     ),
                                   ),
                                   SizedBox(height: 4),
@@ -308,7 +311,9 @@ class VehicleDetailScreen extends StatelessWidget {
                                     'Asia Afrika St. 123, Bandung',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
                                       height: 1.4,
                                     ),
                                   ),
@@ -340,7 +345,7 @@ class VehicleDetailScreen extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                     blurRadius: 10,
                     offset: Offset(0, -5),
                   ),
@@ -356,7 +361,7 @@ class VehicleDetailScreen extends StatelessWidget {
                       backgroundColor: Color(0xFF0066FF),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shadowColor: Color(0xFF0066FF).withOpacity(0.3),
+                      shadowColor: Color(0xFF0066FF).withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -384,9 +389,7 @@ class VehicleDetailScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(8),
-        border: isDark 
-            ? Border.all(color: Color(0xFF2A2A2A))
-            : null,
+        border: isDark ? Border.all(color: Color(0xFF2A2A2A)) : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

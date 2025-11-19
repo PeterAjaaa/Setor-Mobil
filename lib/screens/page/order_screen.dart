@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+// Ensure these imports match your project structure
 import 'package:setor_mobil/screens/page/home_screen.dart';
 import 'package:setor_mobil/screens/page/profile_screen.dart';
 
@@ -16,7 +17,7 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int _selectedBottomNavIndex = 1;
+  int _selectedBottomNavIndex = 1; // Order is index 1
   final _storage = const FlutterSecureStorage();
 
   List<Map<String, dynamic>> _ongoingOrders = [];
@@ -50,23 +51,19 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     }
 
     try {
-      // Get token from secure storage
       final token = await _storage.read(key: 'token');
 
       if (token == null || token.isEmpty) {
         throw Exception('No authentication token found');
       }
 
-      // Decode JWT to get user ID
       Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-      final userId =
-          decodedToken['user_id'] ?? decodedToken['id'] ?? decodedToken['sub'];
+      final userId = decodedToken['user_id'] ?? decodedToken['id'] ?? decodedToken['sub'];
 
       if (userId == null) {
         throw Exception('User ID not found in token');
       }
 
-      // Fetch orders from API
       final response = await http
           .get(
             Uri.parse('https://api.intracrania.com/orders/user/$userId'),
@@ -100,23 +97,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
             };
           }).toList();
 
-          // Separate into ongoing and completed
           if (mounted) {
             setState(() {
               _ongoingOrders = orders
-                  .where(
-                    (order) =>
-                        order['status'] == 'Active' ||
-                        order['status'] == 'Pending',
-                  )
+                  .where((order) =>
+                      order['status'] == 'Active' || order['status'] == 'Pending')
                   .toList();
 
               _completedOrders = orders
-                  .where(
-                    (order) =>
-                        order['status'] == 'Completed' ||
-                        order['status'] == 'Cancelled',
-                  )
+                  .where((order) =>
+                      order['status'] == 'Completed' || order['status'] == 'Cancelled')
                   .toList();
 
               _isLoading = false;
@@ -126,11 +116,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           throw Exception(data['message'] ?? 'Invalid response format');
         }
       } else if (response.statusCode == 404) {
-        // Handle 404 - No orders found for user
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _hasError = false;
             _is404Error = true;
             _ongoingOrders = [];
             _completedOrders = [];
@@ -146,7 +134,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           _isLoading = false;
           _hasError = true;
           _errorMessage = e.toString();
-          _is404Error = false;
         });
       }
     }
@@ -188,237 +175,104 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
   String _getMonthName(int month) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return months[month - 1];
   }
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(String status, ColorScheme colorScheme) {
     switch (status.toLowerCase()) {
       case 'active':
         return Colors.green;
       case 'pending':
         return Colors.orange;
       case 'completed':
-        return Colors.blue;
+        return colorScheme.primary; // Use Global Primary Color
       case 'cancelled':
-        return Colors.red;
+        return colorScheme.error; // Use Global Error Color
       default:
-        return Colors.grey;
+        return colorScheme.outline;
     }
   }
 
-  String _getStatusText(String status) {
-    return status;
-  }
-
-  void _viewOrderDetail(Map<String, dynamic> order) {
+  void _viewOrderDetail(Map<String, dynamic> order, ColorScheme colorScheme) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Order #${order['id']}'),
+        backgroundColor: colorScheme.surface,
+        title: Text('Order #${order['id']}', style: TextStyle(color: colorScheme.onSurface)),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Vehicle: ${order['vehicle']}',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 8),
-              Text('Type: ${order['type']}', style: TextStyle(fontSize: 14)),
-              SizedBox(height: 8),
-              Text(
-                'Duration: ${order['duration']} days',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Price: ${_formatPrice(order['price'])}',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Pickup Location: ${order['pickup_location']}',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Pickup Time: ${_formatDate(order['pickup_time'])} at ${_formatTime(order['pickup_time'])}',
-                style: TextStyle(fontSize: 14),
-              ),
-              SizedBox(height: 8),
+              _buildDetailText('Vehicle', order['vehicle'], colorScheme),
+              _buildDetailText('Type', order['type'], colorScheme),
+              _buildDetailText('Duration', '${order['duration']} days', colorScheme),
+              _buildDetailText('Price', _formatPrice(order['price']), colorScheme),
+              _buildDetailText('Pickup Location', order['pickup_location'], colorScheme),
+              _buildDetailText('Pickup Time',
+                  '${_formatDate(order['pickup_time'])} at ${_formatTime(order['pickup_time'])}', colorScheme),
+              const SizedBox(height: 8),
               Text(
                 'Status: ${order['status']}',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
               ),
               if (order['rating'] != null) ...[
-                SizedBox(height: 8),
-                Text(
-                  'Rating: ${order['rating']['Rating']} ⭐',
-                  style: TextStyle(fontSize: 14),
-                ),
+                const SizedBox(height: 8),
+                Text('Rating: ${order['rating']['Rating']} ⭐', style: TextStyle(color: colorScheme.onSurface)),
               ],
             ],
           ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Close'),
+            child: Text('Close', style: TextStyle(color: colorScheme.primary)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildErrorWidget() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildDetailText(String label, String value, ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: RichText(
+        text: TextSpan(
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red),
-            SizedBox(height: 16),
-            Text(
-              'Failed to load orders',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              _errorMessage,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _fetchOrders,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF0066FF),
-                foregroundColor: Colors.white,
-              ),
-              child: Text('Try Again'),
-            ),
+            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w500)),
+            TextSpan(text: value),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNoOrdersWidget() {
-    return RefreshIndicator(
-      onRefresh: _fetchOrders,
-      color: Color(0xFF0066FF),
-      child: ListView(
-        children: [
-          SizedBox(height: MediaQuery.of(context).size.height * 0.25),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.calendar_today_outlined,
-                    size: 50,
-                    color: Colors.grey[400],
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'No orders yet',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Start by renting your first vehicle!',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    // Use push instead of pushReplacement to maintain navigation stack
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomeScreen()),
-                    ).then((_) {
-                      // When returning from HomeScreen, update the bottom nav to show Home as selected
-                      if (mounted) {
-                        setState(() {
-                          _selectedBottomNavIndex = 0;
-                        });
-                      }
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF0066FF),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text('Rent Now'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // === GLOBAL THEME ACCESS ===
+    // This pulls colors from your main.dart ThemeData
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface, // Uses global background color
       appBar: AppBar(
-        backgroundColor: Color(0xFF0066FF),
-        elevation: 0,
+        backgroundColor: colorScheme.primary, // Uses global primary color
         title: Text(
           'My Orders',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold),
         ),
-        bottom:
-            _is404Error ||
-                (_ongoingOrders.isEmpty &&
-                    _completedOrders.isEmpty &&
-                    !_isLoading &&
-                    !_hasError)
+        iconTheme: IconThemeData(color: colorScheme.onPrimary),
+        bottom: _is404Error || (_ongoingOrders.isEmpty && _completedOrders.isEmpty && !_isLoading && !_hasError)
             ? null
             : TabBar(
                 controller: _tabController,
-                indicatorColor: Colors.white,
-                indicatorWeight: 3,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white70,
-                labelStyle: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                indicatorColor: colorScheme.onPrimary, // Uses global onPrimary color
+                labelColor: colorScheme.onPrimary,
+                unselectedLabelColor: colorScheme.onPrimary.withOpacity(0.7),
                 tabs: [
                   Tab(text: 'Ongoing (${_ongoingOrders.length})'),
                   Tab(text: 'Completed (${_completedOrders.length})'),
@@ -426,305 +280,187 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
               ),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: Color(0xFF0066FF)))
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : _hasError
-          ? _buildErrorWidget()
-          : _is404Error || (_ongoingOrders.isEmpty && _completedOrders.isEmpty)
-          ? _buildNoOrdersWidget()
-          : RefreshIndicator(
-              onRefresh: _fetchOrders,
-              color: Color(0xFF0066FF),
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildOrderList(_ongoingOrders),
-                  _buildOrderList(_completedOrders),
-                ],
-              ),
-            ),
-      bottomNavigationBar: _buildBottomNav(),
+              ? Center(
+                  child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(_errorMessage, style: TextStyle(color: colorScheme.error)),
+                    ElevatedButton(
+                        onPressed: _fetchOrders,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                        ),
+                        child: const Text("Retry"))
+                  ],
+                ))
+              : _is404Error || (_ongoingOrders.isEmpty && _completedOrders.isEmpty)
+                  ? _buildNoOrdersWidget(colorScheme)
+                  : RefreshIndicator(
+                      onRefresh: _fetchOrders,
+                      color: colorScheme.primary,
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildOrderList(_ongoingOrders, colorScheme),
+                          _buildOrderList(_completedOrders, colorScheme),
+                        ],
+                      ),
+                    ),
+      bottomNavigationBar: _buildBottomNav(colorScheme),
     );
   }
 
-  Widget _buildOrderList(List<Map<String, dynamic>> orders) {
+  Widget _buildNoOrdersWidget(ColorScheme colorScheme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.calendar_today_outlined, size: 60, color: colorScheme.onSurfaceVariant),
+          const SizedBox(height: 16),
+          Text('No orders yet',
+              style: TextStyle(fontSize: 18, color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+          TextButton(
+            onPressed: () {
+               Navigator.pushReplacement(
+                 context,
+                 MaterialPageRoute(builder: (context) => const HomeScreen()),
+               );
+            },
+            child: Text('Go to Home', style: TextStyle(color: colorScheme.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderList(List<Map<String, dynamic>> orders, ColorScheme colorScheme) {
     if (orders.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _fetchOrders,
-        color: Color(0xFF0066FF),
-        child: ListView(
+      return Center(child: Text("No orders in this category", style: TextStyle(color: colorScheme.onSurfaceVariant)));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      itemCount: orders.length,
+      itemBuilder: (context, index) => _buildOrderCard(orders[index], colorScheme),
+    );
+  }
+
+  Widget _buildOrderCard(Map<String, dynamic> order, ColorScheme colorScheme) {
+    final statusColor = _getStatusColor(order['status'], colorScheme);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => _viewOrderDetail(order, colorScheme),
+        child: Column(
           children: [
-            SizedBox(height: MediaQuery.of(context).size.height * 0.25),
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.calendar_today_outlined,
-                      size: 50,
-                      color: Colors.grey[400],
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order #${order['id']}',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  SizedBox(height: 16),
-                  Text(
-                    'No orders found',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
-                    ),
+                  child: Text(
+                    order['status'],
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: statusColor),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Rent a vehicle!',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                ],
+                  child: Icon(
+                    order['type'] == 'Motorcycle' ? Icons.two_wheeler : Icons.directions_car,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(order['vehicle'],
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
+                      Text(_formatPrice(order['price']),
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold, color: colorScheme.primary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _viewOrderDetail(order, colorScheme),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('View Detail'),
               ),
             ),
           ],
         ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _fetchOrders,
-      color: Color(0xFF0066FF),
-      child: ListView.builder(
-        padding: EdgeInsets.all(20),
-        itemCount: orders.length,
-        itemBuilder: (context, index) {
-          final order = orders[index];
-          return _buildOrderCard(order);
-        },
       ),
     );
   }
 
-  Widget _buildOrderCard(Map<String, dynamic> order) {
-    final statusColor = _getStatusColor(order['status']);
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _viewOrderDetail(order),
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Order #${order['id']}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      border: Border.all(
-                        color: statusColor.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      _getStatusText(order['status']),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Color(0xFF0066FF).withValues(alpha: 0.1),
-                          Color(0xFF0066FF).withValues(alpha: 0.05),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        order['type'] == 'Motorcycle'
-                            ? Icons.two_wheeler
-                            : Icons.directions_car,
-                        size: 32,
-                        color: Color(0xFF0066FF),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          order['vehicle'],
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A1A1A),
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          order['type'],
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          _formatPrice(order['price']),
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0066FF),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 12),
-
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    _buildInfoRow(
-                      Icons.calendar_today,
-                      'Duration: ${order['duration']} days',
-                    ),
-                    SizedBox(height: 8),
-                    _buildInfoRow(
-                      Icons.access_time,
-                      'Pickup: ${_formatTime(order['pickup_time'])}',
-                    ),
-                    SizedBox(height: 8),
-                    _buildInfoRow(Icons.location_on, order['pickup_location']),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 12),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _viewOrderDetail(order),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF0066FF),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'View Detail',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(Icons.chevron_right, size: 18),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
-        SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(ColorScheme colorScheme) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withOpacity(0.1),
             blurRadius: 8,
-            offset: Offset(0, -5),
+            offset: const Offset(0, -5),
           ),
         ],
       ),
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home, 'Home', 0),
-              _buildNavItem(Icons.calendar_today_outlined, 'Order', 1),
-              _buildNavItem(Icons.person_outline, 'Profile', 2),
+              _buildNavItem(Icons.home, 'Home', 0, colorScheme),
+              _buildNavItem(Icons.calendar_today_outlined, 'Order', 1, colorScheme),
+              _buildNavItem(Icons.person_outline, 'Profile', 2, colorScheme),
             ],
           ),
         ),
@@ -732,42 +468,36 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
+  Widget _buildNavItem(IconData icon, String label, int index, ColorScheme colorScheme) {
     final isSelected = _selectedBottomNavIndex == index;
+    // Use global Primary color for selected, global onSurfaceVariant for unselected
+    final color = isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.6);
+
     return GestureDetector(
       onTap: () {
-        // Only handle navigation if we're not already on the target screen
         if (_selectedBottomNavIndex != index) {
-          setState(() => _selectedBottomNavIndex = index);
-
           if (index == 0) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomeScreen()),
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
           } else if (index == 2) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => ProfileScreen()),
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
           }
-          // For Order (index 1) and Favorite (index 2), we're already on Order screen
-          // so no navigation needed, just update the selected index
         }
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: isSelected ? Color(0xFF0066FF) : Colors.grey[400],
-            size: 24,
-          ),
-          SizedBox(height: 4),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? Color(0xFF0066FF) : Colors.grey[400],
+              color: color,
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
             ),
