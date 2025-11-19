@@ -198,19 +198,6 @@ class VehicleDetailScreen extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(width: 4),
-                                Padding(
-                                  padding: EdgeInsets.only(bottom: 6),
-                                  child: Text(
-                                    '/ day',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isDark
-                                          ? Colors.grey[400]
-                                          : Colors.grey[600],
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
                           ],
