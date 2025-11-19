@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'brand': car['brand'],
                   'model': car['model'],
                   'type': 'Car',
-                  'price': 'Rp. ${_formatPrice(car['price_per_day'])} /day',
+                  'price': '${_formatPrice(car['price_per_day'])} /day',
                   'pricePerDay': car['price_per_day'],
                   'rating': _calculateAverageRating(car['ratings']),
                   'year': car['year'],
