@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:setor_mobil/main.dart'; // <--- IMPORTANT: Import where MyApp is defined
 import 'package:setor_mobil/screens/page/order_screen.dart';
 import 'package:setor_mobil/screens/page/profile_screen.dart';
@@ -176,12 +177,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _formatPrice(dynamic price) {
     if (price == null) return '0';
-    // This is a simple formatter for Indonesian Rupiah (Rp) without using
-    // a more complex package like 'intl'.
-    return price.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
+
+    // Convert to number first to handle different input types
+    final number = price is num
+        ? price
+        : double.tryParse(price.toString()) ?? 0;
+
+    // Create number format for Indonesian Rupiah
+    final format = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp',
+      decimalDigits: 0,
     );
+
+    return format.format(number);
   }
 
   void _startPromoAutoScroll() {
