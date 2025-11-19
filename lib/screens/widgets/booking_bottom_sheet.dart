@@ -12,9 +12,9 @@ class BookingBottomSheet extends StatefulWidget {
 
 class _BookingBottomSheetState extends State<BookingBottomSheet> {
   DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(Duration(days: 2));
-  TimeOfDay _pickupTime = TimeOfDay(hour: 10, minute: 0);
-  final TimeOfDay _returnTime = TimeOfDay(hour: 10, minute: 0);
+  DateTime _endDate = DateTime.now().add(const Duration(days: 2));
+  TimeOfDay _pickupTime = const TimeOfDay(hour: 10, minute: 0);
+  final TimeOfDay _returnTime = const TimeOfDay(hour: 10, minute: 0);
 
   final int _serviceFee = 5000;
   final int _insurance = 10000;
@@ -37,30 +37,19 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   }
 
   Future<void> _selectStartDate() async {
+    // Uses global theme automatically
     final picked = await showDatePicker(
       context: context,
       initialDate: _startDate,
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Color(0xFF0066FF),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
 
     if (picked != null && picked != _startDate) {
       setState(() {
         _startDate = picked;
         if (_endDate.isBefore(_startDate)) {
-          _endDate = _startDate.add(Duration(days: 1));
+          _endDate = _startDate.add(const Duration(days: 1));
         }
       });
     }
@@ -71,19 +60,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
       context: context,
       initialDate: _endDate,
       firstDate: _startDate,
-      lastDate: DateTime.now().add(Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Color(0xFF0066FF),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
 
     if (picked != null && picked != _endDate) {
@@ -95,25 +72,12 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     final picked = await showTimePicker(
       context: context,
       initialTime: _pickupTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Color(0xFF0066FF),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null && picked != _pickupTime) {
       setState(() => _pickupTime = picked);
     }
   }
-
 
   String _formatCurrency(int amount) {
     return NumberFormat.currency(
@@ -134,33 +98,45 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   }
 
   void _proceedToPayment() {
+    final colorScheme = Theme.of(context).colorScheme;
     Navigator.pop(context);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Order Confirmation'),
+        backgroundColor: colorScheme.surface,
+        title: Text(
+          'Order Confirmation',
+          style: TextStyle(color: colorScheme.onSurface),
+        ),
         content: Text(
           'Total: ${_formatCurrency(_total)}\n\n'
           'Duration: $_days days\n'
           'Start From: ${_formatDate(_startDate)} ${_formatTime(_pickupTime)}\n'
           'Return: ${_formatDate(_endDate)} ${_formatTime(_returnTime)}',
+          style: TextStyle(color: colorScheme.onSurfaceVariant),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: colorScheme.primary)),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Order placed successfully')),
+                SnackBar(
+                  content: const Text('Order placed successfully'),
+                  backgroundColor: colorScheme.primary,
+                ),
               );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF0066FF)),
-            child: Text('Confirm'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            ),
+            child: const Text('Confirm'),
           ),
         ],
       ),
@@ -169,6 +145,8 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
@@ -176,26 +154,31 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+            color: colorScheme.surface, // Adapts to Dark/Light
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
             ),
           ),
           child: Column(
             children: [
+              // Drag Handle
               Container(
-                margin: EdgeInsets.symmetric(vertical: 12),
+                margin: const EdgeInsets.symmetric(vertical: 12),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: colorScheme.outline.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
 
+              // Header
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -204,57 +187,58 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1A1A),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close),
-                      color: Colors.grey[600],
+                      icon: const Icon(Icons.close),
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ],
                 ),
               ),
 
-              Divider(height: 1),
+              Divider(height: 1, color: colorScheme.outlineVariant),
 
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   children: [
                     _buildDateField(
                       label: 'Start Date',
                       date: _startDate,
                       onTap: _selectStartDate,
+                      colorScheme: colorScheme,
                     ),
-
-                    SizedBox(height: 16),
-
+                    const SizedBox(height: 16),
                     _buildDateField(
                       label: 'Return Date',
                       date: _endDate,
                       onTap: _selectEndDate,
+                      colorScheme: colorScheme,
                     ),
-
-                    SizedBox(height: 16),
-
+                    const SizedBox(height: 16),
                     _buildTimeField(
                       label: 'Pickup Time',
                       time: _pickupTime,
                       onTap: _selectPickupTime,
+                      colorScheme: colorScheme,
                     ),
+                    const SizedBox(height: 20),
 
-                    SizedBox(height: 20),
-
+                    // Duration Info Box
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        border: Border.all(color: Colors.blue.shade100),
+                        // Uses Primary Container (Light Blue in light mode, Dark Teal in dark mode)
+                        color: colorScheme.primaryContainer.withOpacity(0.4),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.2),
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -262,7 +246,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                             'Rent Duration',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[700],
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                           Text(
@@ -270,19 +254,21 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0066FF),
+                              color: colorScheme.primary,
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
+                    // Price Summary Box
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
+                        // Slightly darker/lighter background for separation
+                        color: colorScheme.surfaceVariant.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -293,27 +279,33 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A1A),
+                              color: colorScheme.onSurface,
                             ),
                           ),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           _buildPriceRow(
                             '${widget.vehicle['price']} x $_days days',
                             _formatCurrency(_subtotal),
+                            colorScheme,
                           ),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           _buildPriceRow(
                             'Service Fee',
                             _formatCurrency(_serviceFee),
+                            colorScheme,
                           ),
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           _buildPriceRow(
                             'Insurance',
                             _formatCurrency(_insurance),
+                            colorScheme,
                           ),
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Divider(color: Colors.grey[300], height: 1),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Divider(
+                              color: colorScheme.outlineVariant,
+                              height: 1,
+                            ),
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -323,7 +315,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1A1A1A),
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               Text(
@@ -331,7 +323,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0066FF),
+                                  color: colorScheme.primary,
                                 ),
                               ),
                             ],
@@ -343,15 +335,16 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                 ),
               ),
 
+              // Bottom Action Bar
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surface,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: colorScheme.shadow.withOpacity(0.1),
                       blurRadius: 8,
-                      offset: Offset(0, -5),
+                      offset: const Offset(0, -5),
                     ),
                   ],
                 ),
@@ -361,14 +354,14 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                     child: ElevatedButton(
                       onPressed: _proceedToPayment,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF0066FF),
-                        foregroundColor: Colors.white,
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Proceed to Payment',
                         style: TextStyle(
                           fontSize: 16,
@@ -390,6 +383,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     required String label,
     required DateTime date,
     required VoidCallback onTap,
+    required ColorScheme colorScheme,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,27 +393,29 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
+            color: colorScheme.onSurface,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         InkWell(
           onTap: onTap,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today, color: Colors.grey[600], size: 20),
+                Icon(
+                  Icons.calendar_today,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
                 Text(
                   _formatDate(date),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF1A1A1A),
-                  ),
+                  style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                 ),
               ],
             ),
@@ -433,16 +429,17 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     required String label,
     required TimeOfDay time,
     required VoidCallback onTap,
+    required ColorScheme colorScheme,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -451,19 +448,20 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                Icon(Icons.access_time, color: Colors.grey[600], size: 20),
+                Icon(
+                  Icons.access_time,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   _formatTime(time),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF1A1A1A),
-                  ),
+                  style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                 ),
               ],
             ),
@@ -473,23 +471,20 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     );
   }
 
-    Widget _buildPriceRow(String label, String amount) {
+  Widget _buildPriceRow(String label, String amount, ColorScheme colorScheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
         ),
         Text(
           amount,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1A1A1A),
+            color: colorScheme.onSurface,
           ),
         ),
       ],
