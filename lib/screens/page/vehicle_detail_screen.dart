@@ -20,26 +20,27 @@ class VehicleDetailScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? Color(0xFF1E1E1E) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       body: Stack(
         children: [
+          // 1. The Scroll View
           CustomScrollView(
             slivers: [
               SliverAppBar(
                 expandedHeight: 250,
                 pinned: true,
-                backgroundColor: Color(0xFF0066FF),
+                backgroundColor: const Color(0xFF0066FF),
                 leading: IconButton(
                   icon: Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDark ? Color(0xFF1E1E1E) : Colors.white,
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
-                          offset: Offset(0, 2),
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -56,8 +57,8 @@ class VehicleDetailScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Color(0xFF0066FF).withValues(alpha: 0.1),
-                          Color(0xFF1A1A1A).withValues(alpha: 0.05),
+                          const Color(0xFF0066FF).withValues(alpha: 0.1),
+                          const Color(0xFF1A1A1A).withValues(alpha: 0.05),
                         ],
                       ),
                     ),
@@ -67,19 +68,19 @@ class VehicleDetailScreen extends StatelessWidget {
                             ? Icons.motorcycle
                             : Icons.directions_car,
                         size: 120,
-                        color: Color(0xFF0066FF),
+                        color: const Color(0xFF0066FF),
                       ),
                     ),
                   ),
                 ),
               ),
-
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Header Section
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -96,7 +97,7 @@ class VehicleDetailScreen extends StatelessWidget {
                                     color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
                                   vehicle['type'],
                                   style: TextStyle(
@@ -110,7 +111,7 @@ class VehicleDetailScreen extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 6,
                             ),
@@ -127,8 +128,12 @@ class VehicleDetailScreen extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.star, color: Colors.amber, size: 18),
-                                SizedBox(width: 4),
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 4),
                                 Text(
                                   vehicle['rating'].toString(),
                                   style: TextStyle(
@@ -152,22 +157,27 @@ class VehicleDetailScreen extends StatelessWidget {
                         ],
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
+                      // Price Section
                       Container(
-                        padding: EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: isDark
                                 ? [
-                                    Color(0xFF1E3ABA).withValues(alpha: 0.3),
-                                    Color(0xFF1E40AF).withValues(alpha: 0.3),
+                                    const Color(
+                                      0xFF1E3ABA,
+                                    ).withValues(alpha: 0.3),
+                                    const Color(
+                                      0xFF1E40AF,
+                                    ).withValues(alpha: 0.3),
                                   ]
                                 : [Colors.blue.shade50, Colors.blue.shade100],
                           ),
                           border: Border.all(
                             color: isDark
-                                ? Color(0xFF1E40AF).withValues(alpha: 0.5)
+                                ? const Color(0xFF1E40AF).withValues(alpha: 0.5)
                                 : Colors.blue.shade200,
                             width: 2,
                           ),
@@ -185,133 +195,50 @@ class VehicleDetailScreen extends StatelessWidget {
                                     : Colors.grey[600],
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
                                   vehicle['price'],
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF0066FF),
                                   ),
                                 ),
-                                SizedBox(width: 4),
+                                const SizedBox(width: 4),
                               ],
                             ),
                           ],
                         ),
                       ),
 
-                      SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
                       Text(
                         'Description',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Color(0xFF1A1A1A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF1A1A1A),
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
+
+                      // --- MODIFICATION HERE ---
+                      // The text will naturally wrap and expand the column height
                       Text(
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                        vehicle['description'],
                         style: TextStyle(
                           fontSize: 14,
                           color: isDark ? Colors.grey[400] : Colors.grey[700],
                           height: 1.5,
                         ),
                       ),
-
-                      SizedBox(height: 24),
-
-                      Text(
-                        'Facilities',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Color(0xFF1A1A1A),
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _buildFeature('2 Helm', isDark),
-                          _buildFeature('Rain Coat', isDark),
-                          _buildFeature('GPS Tracker', isDark),
-                          _buildFeature('Insurance', isDark),
-                        ],
-                      ),
-
-                      SizedBox(height: 24),
-
-                      Container(
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark ? Color(0xFF1E1E1E) : Colors.white,
-                          border: Border.all(
-                            color: isDark
-                                ? Color(0xFF2A2A2A)
-                                : Colors.grey[200]!,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Color(0xFF0066FF).withValues(alpha: 0.2)
-                                    : Colors.blue.shade100,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.location_on,
-                                color: Color(0xFF0066FF),
-                                size: 24,
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Pickup Location',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Color(0xFF1A1A1A),
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Asia Afrika St. 123, Bandung',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isDark
-                                          ? Colors.grey[400]
-                                          : Colors.grey[600],
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: 100),
+                      SizedBox(height: 90),
                     ],
                   ),
                 ),
@@ -319,45 +246,43 @@ class VehicleDetailScreen extends StatelessWidget {
             ],
           ),
 
+          // 2. The Floating Bottom Bar
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
             child: Container(
-              padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? Color(0xFF1E1E1E) : Colors.white,
-                border: Border(
-                  top: BorderSide(color: Colors.grey[200]!, width: 2),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                    blurRadius: 10,
-                    offset: Offset(0, -5),
-                  ),
-                ],
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               ),
               child: SafeArea(
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () => _showBookingBottomSheet(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF0066FF),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shadowColor: Color(0xFF0066FF).withValues(alpha: 0.3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                // 1. Reduce bottom spacing (was 10) to match the top
+                minimum: const EdgeInsets.only(bottom: 4),
+                child: Padding(
+                  // 2. Reduce top spacing (was 10). This removes the gap above.
+                  padding: const EdgeInsets.only(top: 4, left: 20, right: 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () => _showBookingBottomSheet(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0066FF),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shadowColor: const Color(
+                          0xFF0066FF,
+                        ).withValues(alpha: 0.3),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      'Book Now',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      child: const Text(
+                        'Book Now',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -370,13 +295,14 @@ class VehicleDetailScreen extends StatelessWidget {
     );
   }
 
+  // Helper widget (kept from your original code)
   Widget _buildFeature(String text, bool isDark) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1E1E1E) : Colors.grey[50],
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
         borderRadius: BorderRadius.circular(8),
-        border: isDark ? Border.all(color: Color(0xFF2A2A2A)) : null,
+        border: isDark ? Border.all(color: const Color(0xFF2A2A2A)) : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -384,12 +310,12 @@ class VehicleDetailScreen extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Color(0xFF0066FF),
               shape: BoxShape.circle,
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Text(
             text,
             style: TextStyle(
