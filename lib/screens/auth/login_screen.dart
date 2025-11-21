@@ -333,9 +333,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: const Color(
                           0xFF0066FF,
-                        ).withOpacity(0.6),
+                        ).withValues(alpha: 0.6),
                         elevation: 2,
-                        shadowColor: const Color(0xFF0066FF).withOpacity(0.3),
+                        shadowColor: const Color(0xFF0066FF).withValues(alpha: 0.3),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
