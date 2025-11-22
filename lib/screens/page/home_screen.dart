@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
@@ -633,24 +634,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Accept ColorScheme as an argument
+  // 1. Replace your existing _buildVehicleCard with this:
   Widget _buildVehicleCard(
     Map<String, dynamic> vehicle,
     ColorScheme colorScheme,
   ) {
     return Container(
       decoration: BoxDecoration(
-        // Use surface or surfaceVariant for card background
         color: colorScheme.surface,
-        border: Border.all(
-          // Use outline or a subtle color for the border
-          color: colorScheme.outline.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: colorScheme.shadow.withValues(alpha: 0.1),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -658,35 +656,35 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
+          // --- UPDATED IMAGE SECTION ---
+          SizedBox(
             height: 85,
-            decoration: BoxDecoration(
-              // Use a gradient based on the primary color for a subtle effect
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.primary.withValues(alpha: 0.1),
-                  colorScheme.surface.withValues(alpha: 0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.only(
+            width: double.infinity,
+            child: ClipRRect(
+              // Clip the image to match the card's top corners
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
-            ),
-            child: Center(
-              child: Icon(
-                vehicle['type'] == 'Motorcycle'
-                    ? Icons.motorcycle
-                    : Icons.directions_car,
-                size: 50,
-                color: colorScheme.primary, // Icon color is primary
-              ),
+              child: vehicle['image_url'] != null
+                  ? CachedNetworkImage(
+                      imageUrl: vehicle['image_url'],
+                      fit: BoxFit.cover, // Sane fit: fills area, crops edges
+                      // While downloading, show the gradient/icon placeholder
+                      placeholder: (context, url) =>
+                          _buildImagePlaceholder(colorScheme, vehicle['type']),
+                      // If 404 or Offline, show the gradient/icon placeholder
+                      errorWidget: (context, url, error) =>
+                          _buildImagePlaceholder(colorScheme, vehicle['type']),
+                    )
+                  // If API returns null, show the gradient/icon placeholder
+                  : _buildImagePlaceholder(colorScheme, vehicle['type']),
             ),
           ),
+
+          // -----------------------------
           Padding(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -695,22 +693,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color: colorScheme.onSurface, // Text color is onSurface
+                    color: colorScheme.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   vehicle['type'],
                   style: TextStyle(
                     fontSize: 12,
-                    color: colorScheme.onSurface.withValues(
-                      alpha: 0.6,
-                    ), // Secondary text color
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -718,7 +714,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         vehicle['price'],
                         style: TextStyle(
-                          color: colorScheme.primary, // Price color is primary
+                          color: colorScheme.primary,
                           fontWeight: FontWeight.bold,
                           fontSize: 11,
                         ),
@@ -729,16 +725,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     vehicle['rating'] > 0.0
                         ? Row(
                             children: [
-                              // Keep Colors.amber for the star rating as it's a standard accent
-                              Icon(Icons.star, color: Colors.amber, size: 14),
-                              SizedBox(width: 2),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 2),
                               Text(
                                 vehicle['rating'].toStringAsFixed(1),
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: colorScheme
-                                      .onSurface, // Rating text is onSurface
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -754,7 +752,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                   ],
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -768,17 +766,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      // Button background is primary
                       backgroundColor: colorScheme.primary,
-                      // Button text color is onPrimary
                       foregroundColor: colorScheme.onPrimary,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Rent Now',
                       style: TextStyle(
                         fontSize: 12,
@@ -791,6 +787,31 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // 2. Add this new helper method right below _buildVehicleCard:
+  Widget _buildImagePlaceholder(ColorScheme colorScheme, String type) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primary.withValues(alpha: 0.1),
+            colorScheme.surface.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          type == 'Motorcycle' ? Icons.motorcycle : Icons.directions_car,
+          size: 50,
+          color: colorScheme.primary,
+        ),
       ),
     );
   }

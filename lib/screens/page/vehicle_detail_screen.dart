@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:setor_mobil/screens/widgets/booking_bottom_sheet.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class VehicleDetailScreen extends StatelessWidget {
   final Map<String, dynamic> vehicle;
@@ -12,6 +13,31 @@ class VehicleDetailScreen extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => BookingBottomSheet(vehicle: vehicle),
+    );
+  }
+
+  Widget _buildPlaceholder(bool isDark, String type, {bool isLoading = false}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFF0066FF).withValues(alpha: 0.1),
+            const Color(0xFF1A1A1A).withValues(alpha: 0.05),
+          ],
+        ),
+      ),
+      child: Center(
+        child: isLoading
+            ? const CircularProgressIndicator()
+            : Icon(
+                type == 'Motorcycle' ? Icons.motorcycle : Icons.directions_car,
+                size: 120,
+                color: const Color(0xFF0066FF),
+              ),
+      ),
     );
   }
 
@@ -53,25 +79,34 @@ class VehicleDetailScreen extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                 ),
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF0066FF).withValues(alpha: 0.1),
-                          const Color(0xFF1A1A1A).withValues(alpha: 0.05),
-                        ],
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        vehicle['type'] == 'Motorcycle'
-                            ? Icons.motorcycle
-                            : Icons.directions_car,
-                        size: 120,
-                        color: const Color(0xFF0066FF),
-                      ),
-                    ),
-                  ),
+                  background: vehicle['image_url'] != null
+                      ? CachedNetworkImage(
+                          imageUrl: vehicle['image_url'],
+                          fit: BoxFit.cover, // Ensures sane fit
+                          width: double.infinity,
+                          height: double.infinity,
+
+                          // What to show while the image is downloading
+                          placeholder: (context, url) => _buildPlaceholder(
+                            isDark,
+                            vehicle['type'],
+                            isLoading: true,
+                          ),
+
+                          // What to show if the URL is broken (404)
+                          errorWidget: (context, url, error) =>
+                              _buildPlaceholder(
+                                isDark,
+                                vehicle['type'],
+                                isLoading: false,
+                              ),
+                        )
+                      // Fallback if image_url is null in the data
+                      : _buildPlaceholder(
+                          isDark,
+                          vehicle['type'],
+                          isLoading: false,
+                        ),
                 ),
               ),
               SliverToBoxAdapter(

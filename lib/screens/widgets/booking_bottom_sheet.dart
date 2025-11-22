@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class BookingBottomSheet extends StatefulWidget {
   final Map<String, dynamic> vehicle;
@@ -11,6 +14,7 @@ class BookingBottomSheet extends StatefulWidget {
 }
 
 class _BookingBottomSheetState extends State<BookingBottomSheet> {
+  final _storage = const FlutterSecureStorage();
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 2));
   TimeOfDay _pickupTime = const TimeOfDay(hour: 10, minute: 0);
@@ -18,6 +22,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
 
   final int _serviceFee = 5000;
   final int _insurance = 10000;
+  bool _isLoading = false;
 
   int get _days {
     return _endDate.difference(_startDate).inDays + 1;
@@ -37,7 +42,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   }
 
   Future<void> _selectStartDate() async {
-    // Uses global theme automatically
     final picked = await showDatePicker(
       context: context,
       initialDate: _startDate,
@@ -97,9 +101,109 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     return '$hour:$minute';
   }
 
+  String _formatDateTimeRFC3339(DateTime date, TimeOfDay time) {
+    // Combine date with time
+    final dateTime = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+      0,
+    );
+
+    // Format with timezone offset
+    final offset = dateTime.timeZoneOffset;
+    final offsetSign = offset.isNegative ? '-' : '+';
+    final offsetHours = offset.inHours.abs().toString().padLeft(2, '0');
+    final offsetMinutes = (offset.inMinutes.abs() % 60).toString().padLeft(
+      2,
+      '0',
+    );
+
+    return '${DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(dateTime)}$offsetSign$offsetHours:$offsetMinutes';
+  }
+
+  Future<void> _createOrder() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final token = await _storage.read(key: 'token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+
+      // Determine the correct ID field based on vehicle type
+      final vehicleType = widget.vehicle['type'];
+      final vehicleId = widget.vehicle['id'];
+
+      // Get the raw price per day (without formatting)
+      final pricePerDay = widget.vehicle['pricePerDay'] ?? 0;
+
+      Map<String, dynamic> requestBody = {
+        'duration': _days,
+        'pickup_time': _formatDateTimeRFC3339(_startDate, _pickupTime),
+        'start_date': _formatDateTimeRFC3339(_startDate, _pickupTime),
+        'return_date': _formatDateTimeRFC3339(_endDate, _returnTime),
+        'price': pricePerDay * _days,
+        'status': 'Pending',
+      };
+
+      // Add the appropriate ID field based on vehicle type
+      if (vehicleType == 'Car') {
+        requestBody['car_id'] = vehicleId;
+      } else if (vehicleType == 'Motorcycle') {
+        requestBody['motorcycle_id'] = vehicleId;
+      }
+
+      final response = await http.post(
+        Uri.parse('https://api.intracrania.com/orders/create'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(requestBody),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (!mounted) return;
+
+        Navigator.pop(context);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Order placed successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? 'Failed to create order'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _proceedToPayment() {
     final colorScheme = Theme.of(context).colorScheme;
-    Navigator.pop(context);
 
     showDialog(
       context: context,
@@ -123,20 +227,27 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
             child: Text('Cancel', style: TextStyle(color: colorScheme.primary)),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Order placed successfully'),
-                  backgroundColor: colorScheme.primary,
-                ),
-              );
-            },
+            onPressed: _isLoading
+                ? null
+                : () {
+                    Navigator.pop(context);
+                    _createOrder();
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
+              disabledBackgroundColor: colorScheme.primary.withOpacity(0.6),
             ),
-            child: const Text('Confirm'),
+            child: _isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: colorScheme.onPrimary,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text('Confirm'),
           ),
         ],
       ),
@@ -154,7 +265,7 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
-            color: colorScheme.surface, // Adapts to Dark/Light
+            color: colorScheme.surface,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
@@ -162,7 +273,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
           ),
           child: Column(
             children: [
-              // Drag Handle
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 width: 40,
@@ -173,7 +283,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                 ),
               ),
 
-              // Header
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -228,11 +337,9 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Duration Info Box
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        // Uses Primary Container (Light Blue in light mode, Dark Teal in dark mode)
                         color: colorScheme.primaryContainer.withValues(
                           alpha: 0.4,
                         ),
@@ -265,11 +372,9 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
 
                     const SizedBox(height: 20),
 
-                    // Price Summary Box
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        // Slightly darker/lighter background for separation
                         color: colorScheme.surfaceContainerHighest.withValues(
                           alpha: 0.3,
                         ),
@@ -339,7 +444,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                 ),
               ),
 
-              // Bottom Action Bar
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -356,22 +460,33 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _proceedToPayment,
+                      onPressed: _isLoading ? null : _proceedToPayment,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colorScheme.primary,
                         foregroundColor: colorScheme.onPrimary,
+                        disabledBackgroundColor: colorScheme.primary
+                            .withOpacity(0.6),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Proceed to Payment',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: colorScheme.onPrimary,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              'Proceed to Payment',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ),
