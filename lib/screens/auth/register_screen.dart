@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:setor_mobil/screens/auth/otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -134,14 +135,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (response.statusCode == 200 || response.statusCode == 201) {
           if (!mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Registration Successful! Please login.'),
-              backgroundColor: Colors.green,
-            ),
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => OtpScreen(
+              email: _emailController.text,
+            )),
           );
-
-          Navigator.pop(context);
         } else {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(

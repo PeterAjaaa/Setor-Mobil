@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:setor_mobil/screens/auth/forgotpass_screen.dart';
+import 'package:setor_mobil/screens/auth/otp_screen.dart';
 import 'package:setor_mobil/screens/auth/register_screen.dart';
 import 'package:setor_mobil/screens/page/home_screen.dart';
 
@@ -56,7 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => OtpScreen(
+              email: _emailController.text,
+            )),
           );
         } else {
           if (!mounted) return;
