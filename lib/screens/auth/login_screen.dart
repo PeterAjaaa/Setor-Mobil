@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:setor_mobil/screens/auth/forgotpass_screen.dart';
 import 'package:setor_mobil/screens/auth/register_screen.dart';
 import 'package:setor_mobil/screens/page/home_screen.dart';
 
@@ -84,13 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const RegisterScreen()),
-    );
-  }
-
-  void _navigateToForgotPassword() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ForgotpassScreen()),
     );
   }
 
@@ -305,23 +297,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 12),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _navigateToForgotPassword,
-                      child: const Text(
-                        'Forgot Password?',
-                        style: TextStyle(
-                          color: Color(0xFF0066FF),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-
                   const SizedBox(height: 24),
 
                   SizedBox(
@@ -335,7 +310,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           0xFF0066FF,
                         ).withValues(alpha: 0.6),
                         elevation: 2,
-                        shadowColor: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                        shadowColor: const Color(
+                          0xFF0066FF,
+                        ).withValues(alpha: 0.3),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
