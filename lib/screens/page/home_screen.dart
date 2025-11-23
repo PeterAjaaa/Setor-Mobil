@@ -266,109 +266,55 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader(ColorScheme colorScheme) {
-    // Use colors from ColorScheme
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        // Use primary container color for the header background
         color: colorScheme.primary,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
         ),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Left side: App Title/Logo
+          Text(
+            'Setor Mobil',
+            style: TextStyle(
+              color: colorScheme.onPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          // Right side: Action buttons
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Left side: Location
-              Row(
-                children: [
-                  // Use onPrimary for icons/text on the primary background
-                  Icon(
-                    Icons.location_on,
-                    color: colorScheme.onPrimary,
-                    size: 20,
-                  ),
-                  SizedBox(width: 4),
-                  Text(
-                    'Bandung, West Java',
-                    style: TextStyle(
-                      color: colorScheme.onPrimary, // Use onPrimary
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+              IconButton(
+                onPressed: () {
+                  final isDark =
+                      Theme.of(context).brightness == Brightness.dark;
+                  final newTheme = isDark ? ThemeMode.light : ThemeMode.dark;
+                  MyApp.of(context).toggleTheme(newTheme);
+                },
+                icon: Icon(
+                  Theme.of(context).brightness == Brightness.light
+                      ? Icons.dark_mode
+                      : Icons.light_mode,
+                  color: colorScheme.onPrimary,
+                ),
               ),
-              // Right side: Profile Icon & Dark Mode Toggle
-              Row(
-                children: [
-                  // --- UPDATED TOGGLE BUTTON ---
-                  IconButton(
-                    onPressed: () {
-                      final isDark =
-                          Theme.of(context).brightness == Brightness.dark;
-                      final newTheme = isDark
-                          ? ThemeMode.light
-                          : ThemeMode.dark;
-                      MyApp.of(context).toggleTheme(newTheme);
-                    },
-                    icon: Icon(
-                      Theme.of(context).brightness == Brightness.light
-                          ? Icons.dark_mode
-                          : Icons.light_mode,
-                      color: colorScheme.onPrimary, // Use onPrimary
-                    ),
-                  ),
-                  // -----------------------------
-                  IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProfileScreen(),
-                        ),
-                      );
-                    },
-                    icon: Icon(
-                      Icons.person_outlined,
-                      color: colorScheme.onPrimary,
-                    ), // Use onPrimary
-                  ),
-                ],
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProfileScreen()),
+                  );
+                },
+                icon: Icon(Icons.person_outlined, color: colorScheme.onPrimary),
               ),
             ],
-          ),
-          SizedBox(height: 16),
-          // Search Bar
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              // Using colorScheme.surface or a lighter color for the search bar background
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.search,
-                  color: colorScheme.onSurface.withValues(alpha: 0.4),
-                ), // Use onSurface with opacity
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Search vehicles',
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withValues(
-                        alpha: 0.4,
-                      ), // Use onSurface with opacity
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
