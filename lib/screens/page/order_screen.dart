@@ -25,7 +25,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   bool _isLoading = true;
   bool _hasError = false;
   String _errorMessage = '';
-  bool _is404Error = false;
+  bool _hasNoOrders = false;
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
         _isLoading = true;
         _hasError = false;
         _errorMessage = '';
-        _is404Error = false;
+        _hasNoOrders = false;
       });
     }
 
@@ -54,7 +54,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       final token = await _storage.read(key: 'token');
 
       if (token == null || token.isEmpty) {
-        throw Exception('No authentication token found');
+        // Auth error - show error screen
+        throw Exception('Authentication required. Please login again.');
       }
 
       Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
@@ -62,7 +63,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           decodedToken['user_id'] ?? decodedToken['id'] ?? decodedToken['sub'];
 
       if (userId == null) {
-        throw Exception('User ID not found in token');
+        throw Exception('Invalid authentication token');
       }
 
       final response = await http
@@ -80,6 +81,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
 
         if (data['status'] == 200 && data['data'] != null) {
           final ordersList = data['data'] as List;
+
+          // Check if the list is empty - show no orders widget
+          if (ordersList.isEmpty) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _hasNoOrders = true;
+                _ongoingOrders = [];
+                _completedOrders = [];
+              });
+            }
+            return;
+          }
+
           final List<Map<String, dynamic>> orders = [];
 
           // Fetch vehicle details for each order
@@ -122,30 +137,53 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   .toList();
 
               _isLoading = false;
+              // If both lists are empty after filtering, show no orders
+              _hasNoOrders = _ongoingOrders.isEmpty && _completedOrders.isEmpty;
             });
           }
         } else {
           throw Exception(data['message'] ?? 'Invalid response format');
         }
       } else if (response.statusCode == 404) {
+        // 404 means user has no orders - show no orders widget gracefully
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _is404Error = true;
+            _hasNoOrders = true;
             _ongoingOrders = [];
             _completedOrders = [];
           });
         }
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        // Authentication/Authorization error
+        throw Exception('Session expired. Please login again.');
       } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
+        // Other server errors - show error screen with retry
+        throw Exception('Unable to load orders. Please try again.');
       }
     } catch (e) {
       debugPrint('Error fetching orders: $e');
+
+      // Determine if this is a critical error or we should show no orders
+      String errorMsg = e.toString();
+      bool isCriticalError =
+          errorMsg.contains('Authentication') ||
+          errorMsg.contains('Session') ||
+          errorMsg.contains('Invalid');
+
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _hasError = true;
-          _errorMessage = e.toString();
+          if (isCriticalError) {
+            // Show error screen for auth issues
+            _hasError = true;
+            _errorMessage = errorMsg.replaceAll('Exception: ', '');
+          } else {
+            // For network issues, show no orders with retry option
+            _hasNoOrders = true;
+            _ongoingOrders = [];
+            _completedOrders = [];
+          }
         });
       }
     }
@@ -209,8 +247,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   String _formatDate(String? dateStr) {
     if (dateStr == null) return 'N/A';
     try {
-      // Extract date without timezone conversion
-      // Format: "2025-11-22T10:10:00+07:00"
       final parts = dateStr.split('T')[0].split('-');
       final year = int.parse(parts[0]);
       final month = int.parse(parts[1]);
@@ -224,8 +260,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
   String _formatTime(String? dateStr) {
     if (dateStr == null) return 'N/A';
     try {
-      // Extract time without timezone conversion
-      // Format: "2025-11-22T10:10:00+07:00"
       final timePart = dateStr.split('T')[1].split('+')[0].split('-')[0];
       final parts = timePart.split(':');
       final hour = parts[0].padLeft(2, '0');
@@ -283,7 +317,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Vehicle Image
               if (order['image_url'] != null && order['image_url'].isNotEmpty)
                 Container(
                   height: 120,
@@ -408,12 +441,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
           ),
         ),
         iconTheme: IconThemeData(color: colorScheme.onPrimary),
-        bottom:
-            _is404Error ||
-                (_ongoingOrders.isEmpty &&
-                    _completedOrders.isEmpty &&
-                    !_isLoading &&
-                    !_hasError)
+        // Only show tabs if there are orders
+        bottom: _hasNoOrders
             ? null
             : TabBar(
                 controller: _tabController,
@@ -431,26 +460,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : _hasError
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _errorMessage,
-                    style: TextStyle(color: colorScheme.error),
-                  ),
-                  ElevatedButton(
-                    onPressed: _fetchOrders,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                    ),
-                    child: const Text("Retry"),
-                  ),
-                ],
-              ),
-            )
-          : _is404Error || (_ongoingOrders.isEmpty && _completedOrders.isEmpty)
+          ? _buildErrorWidget(colorScheme)
+          : _hasNoOrders
           ? _buildNoOrdersWidget(colorScheme)
           : TabBarView(
               controller: _tabController,
@@ -463,38 +474,132 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
     );
   }
 
+  Widget _buildErrorWidget(ColorScheme colorScheme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 80,
+              color: colorScheme.error.withValues(alpha: 0.8),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Oops! Something went wrong',
+              style: TextStyle(
+                fontSize: 22,
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                _errorMessage,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _fetchOrders,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.refresh),
+              label: const Text(
+                'Try Again',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildNoOrdersWidget(ColorScheme colorScheme) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.calendar_today_outlined,
-            size: 60,
-            color: colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No orders yet',
-            style: TextStyle(
-              fontSize: 18,
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 100,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HomeScreen()),
-              );
-            },
-            child: Text(
-              'Go to Home',
-              style: TextStyle(color: colorScheme.primary),
+            const SizedBox(height: 24),
+            Text(
+              'No Orders Yet',
+              style: TextStyle(
+                fontSize: 24,
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              'You haven\'t made any orders yet.\nStart exploring and rent your first vehicle!',
+              style: TextStyle(
+                fontSize: 16,
+                color: colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.explore),
+              label: const Text(
+                'Browse Vehicles',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: _fetchOrders,
+              child: Text(
+                'Refresh',
+                style: TextStyle(color: colorScheme.primary, fontSize: 14),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -596,7 +701,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
             const SizedBox(height: 12),
             Row(
               children: [
-                // Vehicle Image with proper cropping
                 Container(
                   width: 60,
                   height: 60,
