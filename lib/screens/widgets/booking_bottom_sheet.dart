@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:setor_mobil/screens/page/order_screen.dart';
 
 class BookingBottomSheet extends StatefulWidget {
   final Map<String, dynamic> vehicle;
@@ -102,7 +103,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
   }
 
   String _formatDateTimeRFC3339(DateTime date, TimeOfDay time) {
-    // Combine date with time
     final dateTime = DateTime(
       date.year,
       date.month,
@@ -112,7 +112,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
       0,
     );
 
-    // Format with timezone offset
     final offset = dateTime.timeZoneOffset;
     final offsetSign = offset.isNegative ? '-' : '+';
     final offsetHours = offset.inHours.abs().toString().padLeft(2, '0');
@@ -122,6 +121,105 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
     );
 
     return '${DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(dateTime)}$offsetSign$offsetHours:$offsetMinutes';
+  }
+
+  void _showSuccessDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_outline,
+                size: 50,
+                color: Colors.green.shade600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Order Placed Successfully!',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your booking has been confirmed. You can view your order details in the Orders tab.',
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Close success dialog
+                  Navigator.pop(context);
+                  // Close booking bottom sheet
+                  Navigator.pop(context);
+                  // Navigate to Order History Screen
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OrderHistoryScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'View My Orders',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                // Close success dialog
+                Navigator.pop(context);
+                // Close booking bottom sheet
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _createOrder() async {
@@ -134,11 +232,8 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
         throw Exception('No authentication token found');
       }
 
-      // Determine the correct ID field based on vehicle type
       final vehicleType = widget.vehicle['type'];
       final vehicleId = widget.vehicle['id'];
-
-      // Get the raw price per day (without formatting)
       final pricePerDay = widget.vehicle['pricePerDay'] ?? 0;
 
       Map<String, dynamic> requestBody = {
@@ -150,7 +245,6 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
         'status': 'Pending',
       };
 
-      // Add the appropriate ID field based on vehicle type
       if (vehicleType == 'Car') {
         requestBody['car_id'] = vehicleId;
       } else if (vehicleType == 'Motorcycle') {
@@ -171,14 +265,8 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return;
 
-        Navigator.pop(context);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Order placed successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        // Show success dialog instead of snackbar
+        _showSuccessDialog();
       } else {
         if (!mounted) return;
 
