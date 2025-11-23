@@ -3,7 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
-import 'package:setor_mobil/main.dart'; // <--- IMPORTANT: Import where MyApp is defined
+import 'package:setor_mobil/main.dart';
 import 'package:setor_mobil/screens/page/order_screen.dart';
 import 'package:setor_mobil/screens/page/profile_screen.dart';
 import 'package:setor_mobil/screens/page/vehicle_detail_screen.dart';
@@ -26,23 +26,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _promoTimer;
   final _storage = const FlutterSecureStorage();
 
-  // The promo colors should ideally also follow the ColorScheme,
-  // but keeping the hardcoded colors here for unique promo identity.
   final List<Map<String, dynamic>> _promos = [
     {
       'title': '50% Discount',
       'subtitle': 'Get 50% Discount',
-      'colors': [Color(0xFF0066FF), Color(0xFF2563Eb)], // Primary Blue
+      'colors': [Color(0xFF0066FF), Color(0xFF2563Eb)],
     },
     {
       'title': 'Free Delivery',
       'subtitle': 'Rent 3 days minimal',
-      'colors': [Color(0xFFfbbf24), Color(0xFFeA580C)], // Yellow/Orange
+      'colors': [Color(0xFFfbbf24), Color(0xFFeA580C)],
     },
     {
       'title': 'Cashback 100k',
       'subtitle': 'First Transaction',
-      'colors': [Color(0xFFa855F7), Color(0xFF9333EA)], // Purple
+      'colors': [Color(0xFFa855F7), Color(0xFF9333EA)],
     },
   ];
 
@@ -108,6 +106,8 @@ class _HomeScreenState extends State<HomeScreen> {
           final cars = (carsData['data'] as List)
               .where((car) => car['status'] == 'Available')
               .map((car) {
+                // Get ratings array
+                final ratings = car['ratings'] as List<dynamic>?;
                 return {
                   'id': car['id'],
                   'name': '${car['brand']} ${car['model']}',
@@ -116,7 +116,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   'type': 'Car',
                   'price': '${_formatPrice(car['price_per_day'])}/day',
                   'pricePerDay': car['price_per_day'],
-                  'rating': _calculateAverageRating(car['ratings']),
+                  'rating': _calculateAverageRating(ratings),
+                  'ratingCount': ratings?.length ?? 0, // Add rating count
                   'year': car['year'],
                   'description': car['description'],
                   'image_url': car['image_url'],
@@ -135,6 +136,8 @@ class _HomeScreenState extends State<HomeScreen> {
           final motorcycles = (motorcyclesData['data'] as List)
               .where((moto) => moto['status'] == 'Available')
               .map((moto) {
+                // Get ratings array
+                final ratings = moto['ratings'] as List<dynamic>?;
                 return {
                   'id': moto['id'],
                   'name': '${moto['brand']} ${moto['model']}',
@@ -143,7 +146,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   'type': 'Motorcycle',
                   'price': '${_formatPrice(moto['price_per_day'])}/day',
                   'pricePerDay': moto['price_per_day'],
-                  'rating': _calculateAverageRating(moto['ratings']),
+                  'rating': _calculateAverageRating(ratings),
+                  'ratingCount': ratings?.length ?? 0, // Add rating count
                   'year': moto['year'],
                   'description': moto['description'],
                   'image_url': moto['image_url'],
@@ -164,7 +168,6 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _isLoading = false);
 
       if (mounted) {
-        // Use a color from the theme or a dedicated error color
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -179,12 +182,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String _formatPrice(dynamic price) {
     if (price == null) return '0';
 
-    // Convert to number first to handle different input types
     final number = price is num
         ? price
         : double.tryParse(price.toString()) ?? 0;
 
-    // Create number format for Indonesian Rupiah
     final format = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp',
@@ -219,12 +220,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the ColorScheme from the current theme context
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      // Use the color scheme's background color (e.g., colorScheme.background or colorScheme.surface)
-      // The default Scaffold background usually adapts well, but setting it explicitly can be helpful.
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
@@ -234,13 +232,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: _isLoading
                   ? Center(
                       child: CircularProgressIndicator(
-                        // Use the primary color from the ColorScheme
                         color: colorScheme.primary,
                       ),
                     )
                   : RefreshIndicator(
                       onRefresh: _fetchVehicles,
-                      // Use the primary color for the indicator color
                       color: colorScheme.primary,
                       child: SingleChildScrollView(
                         physics: AlwaysScrollableScrollPhysics(),
@@ -278,7 +274,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left side: App Title/Logo
           Text(
             'Setor Mobil',
             style: TextStyle(
@@ -288,7 +283,6 @@ class _HomeScreenState extends State<HomeScreen> {
               letterSpacing: 0.5,
             ),
           ),
-          // Right side: Action buttons
           Row(
             children: [
               IconButton(
@@ -332,7 +326,6 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              // Use onBackground/onSurface for general text
               color: colorScheme.onSurface,
             ),
           ),
@@ -352,8 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors:
-                          promo['colors'], // Keep hardcoded colors for promos
+                      colors: promo['colors'],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -369,8 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             promo['title'],
                             style: TextStyle(
-                              color: Colors
-                                  .white, // Colors.white works well on the gradient
+                              color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
@@ -379,9 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Text(
                             promo['subtitle'],
                             style: TextStyle(
-                              color: Colors.white.withValues(
-                                alpha: 0.9,
-                              ), // Colors.white works well on the gradient
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 14,
                             ),
                           ),
@@ -391,7 +380,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
-                          // Use the first color of the promo for the text (e.g., blue for the blue promo)
                           foregroundColor: promo['colors'][0],
                           elevation: 0,
                           padding: EdgeInsets.symmetric(
@@ -426,12 +414,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: index == _currentPromoIndex ? 24 : 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  // Use the primary color for the active indicator
                   color: index == _currentPromoIndex
                       ? colorScheme.primary
-                      : colorScheme.onSurface.withValues(
-                          alpha: 0.3,
-                        ), // Light grey equivalent on any background
+                      : colorScheme.onSurface.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),
@@ -453,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface, // Use onBackground
+              color: colorScheme.onSurface,
             ),
           ),
           SizedBox(height: 12),
@@ -467,17 +452,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     setState(() => _selectedCategory = category);
                   },
                   style: ElevatedButton.styleFrom(
-                    // Use primary for selected, surface/secondaryContainer for unselected
                     backgroundColor: isSelected
                         ? colorScheme.primary
-                        : colorScheme.secondaryContainer.withValues(
-                            alpha: 0.3,
-                          ), // A light grey/container background
+                        : colorScheme.secondaryContainer.withValues(alpha: 0.3),
                     foregroundColor: isSelected
-                        ? colorScheme
-                              .onPrimary // Text on primary is onPrimary
-                        : colorScheme
-                              .onSurface, // Text on container is onSurface
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurface,
                     elevation: 0,
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     shape: RoundedRectangleBorder(
@@ -536,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface, // Use onBackground
+                  color: colorScheme.onSurface,
                 ),
               ),
               TextButton.icon(
@@ -546,12 +526,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: colorScheme.primary, // Use primary color
+                    color: colorScheme.primary,
                   ),
                 ),
                 label: Icon(
                   Icons.chevron_right,
-                  color: colorScheme.primary, // Use primary color
+                  color: colorScheme.primary,
                   size: 18,
                 ),
               ),
@@ -568,7 +548,6 @@ class _HomeScreenState extends State<HomeScreen> {
               childAspectRatio: 0.65,
             ),
             itemCount: _filteredVehicles.length,
-            // Pass the ColorScheme down to the card
             itemBuilder: (context, index) {
               final vehicle = _filteredVehicles[index];
               return _buildVehicleCard(vehicle, colorScheme);
@@ -579,8 +558,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Accept ColorScheme as an argument
-  // 1. Replace your existing _buildVehicleCard with this:
   Widget _buildVehicleCard(
     Map<String, dynamic> vehicle,
     ColorScheme colorScheme,
@@ -602,12 +579,10 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // --- UPDATED IMAGE SECTION ---
           SizedBox(
             height: 85,
             width: double.infinity,
             child: ClipRRect(
-              // Clip the image to match the card's top corners
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -615,20 +590,15 @@ class _HomeScreenState extends State<HomeScreen> {
               child: vehicle['image_url'] != null
                   ? CachedNetworkImage(
                       imageUrl: vehicle['image_url'],
-                      fit: BoxFit.cover, // Sane fit: fills area, crops edges
-                      // While downloading, show the gradient/icon placeholder
+                      fit: BoxFit.cover,
                       placeholder: (context, url) =>
                           _buildImagePlaceholder(colorScheme, vehicle['type']),
-                      // If 404 or Offline, show the gradient/icon placeholder
                       errorWidget: (context, url, error) =>
                           _buildImagePlaceholder(colorScheme, vehicle['type']),
                     )
-                  // If API returns null, show the gradient/icon placeholder
                   : _buildImagePlaceholder(colorScheme, vehicle['type']),
             ),
           ),
-
-          // -----------------------------
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -737,7 +707,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 2. Add this new helper method right below _buildVehicleCard:
   Widget _buildImagePlaceholder(ColorScheme colorScheme, String type) {
     return Container(
       width: double.infinity,
@@ -762,11 +731,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Accept ColorScheme as an argument
   Widget _buildBottomNav(ColorScheme colorScheme) {
     return Container(
       decoration: BoxDecoration(
-        // Bottom nav background is surface
         color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
@@ -782,7 +749,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // Pass the ColorScheme to the nav item
               _buildNavItem(Icons.home, 'Home', 0, colorScheme),
               _buildNavItem(
                 Icons.calendar_today_outlined,
@@ -798,7 +764,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Accept ColorScheme as an argument
   Widget _buildNavItem(
     IconData icon,
     String label,
@@ -832,7 +797,6 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Icon(
             icon,
-            // Selected color is primary, unselected is onSurface with opacity
             color: isSelected
                 ? colorScheme.primary
                 : colorScheme.onSurface.withValues(alpha: 0.4),
@@ -842,7 +806,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             label,
             style: TextStyle(
-              // Selected color is primary, unselected is onSurface with opacity
               color: isSelected
                   ? colorScheme.primary
                   : colorScheme.onSurface.withValues(alpha: 0.4),
