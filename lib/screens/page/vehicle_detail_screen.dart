@@ -44,12 +44,12 @@ class VehicleDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ratingCount = vehicle['ratingCount'] ?? 0;
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       body: Stack(
         children: [
-          // 1. The Scroll View
           CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -82,18 +82,14 @@ class VehicleDetailScreen extends StatelessWidget {
                   background: vehicle['image_url'] != null
                       ? CachedNetworkImage(
                           imageUrl: vehicle['image_url'],
-                          fit: BoxFit.cover, // Ensures sane fit
+                          fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
-
-                          // What to show while the image is downloading
                           placeholder: (context, url) => _buildPlaceholder(
                             isDark,
                             vehicle['type'],
                             isLoading: true,
                           ),
-
-                          // What to show if the URL is broken (404)
                           errorWidget: (context, url, error) =>
                               _buildPlaceholder(
                                 isDark,
@@ -101,7 +97,6 @@ class VehicleDetailScreen extends StatelessWidget {
                                 isLoading: false,
                               ),
                         )
-                      // Fallback if image_url is null in the data
                       : _buildPlaceholder(
                           isDark,
                           vehicle['type'],
@@ -115,7 +110,6 @@ class VehicleDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header Section
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -145,56 +139,83 @@ class VehicleDetailScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.amber.withValues(alpha: 0.2)
-                                  : Colors.amber.shade50,
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.amber.withValues(alpha: 0.3)
-                                    : Colors.amber.shade100,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.star,
-                                  color: Colors.amber,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  vehicle['rating'].toString(),
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: isDark ? Colors.white : Colors.black,
+                          // Updated rating section
+                          ratingCount > 0
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
                                   ),
-                                ),
-                                Text(
-                                  ' (124)',
-                                  style: TextStyle(
-                                    fontSize: 14,
+                                  decoration: BoxDecoration(
                                     color: isDark
-                                        ? Colors.grey[400]
-                                        : Colors.grey[600],
+                                        ? Colors.amber.withValues(alpha: 0.2)
+                                        : Colors.amber.shade50,
+                                    border: Border.all(
+                                      color: isDark
+                                          ? Colors.amber.withValues(alpha: 0.3)
+                                          : Colors.amber.shade100,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        color: Colors.amber,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        vehicle['rating'].toStringAsFixed(1),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: isDark ? Colors.white : Colors.black,
+                                        ),
+                                      ),
+                                      Text(
+                                        ' ($ratingCount)',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: isDark
+                                              ? Colors.grey[400]
+                                              : Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.grey.withValues(alpha: 0.2)
+                                        : Colors.grey.shade100,
+                                    border: Border.all(
+                                      color: isDark
+                                          ? Colors.grey.withValues(alpha: 0.3)
+                                          : Colors.grey.shade300,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'No ratings',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
 
                       const SizedBox(height: 20),
 
-                      // Price Section
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -263,8 +284,6 @@ class VehicleDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
 
-                      // --- MODIFICATION HERE ---
-                      // The text will naturally wrap and expand the column height
                       Text(
                         vehicle['description'],
                         style: TextStyle(
@@ -281,7 +300,6 @@ class VehicleDetailScreen extends StatelessWidget {
             ],
           ),
 
-          // 2. The Floating Bottom Bar
           Positioned(
             left: 0,
             right: 0,
@@ -291,10 +309,8 @@ class VehicleDetailScreen extends StatelessWidget {
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               ),
               child: SafeArea(
-                // 1. Reduce bottom spacing (was 10) to match the top
                 minimum: const EdgeInsets.only(bottom: 4),
                 child: Padding(
-                  // 2. Reduce top spacing (was 10). This removes the gap above.
                   padding: const EdgeInsets.only(top: 4, left: 20, right: 20),
                   child: SizedBox(
                     width: double.infinity,
