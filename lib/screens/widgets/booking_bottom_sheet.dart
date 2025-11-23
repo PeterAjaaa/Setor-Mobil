@@ -236,7 +236,9 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
-              disabledBackgroundColor: colorScheme.primary.withOpacity(0.6),
+              disabledBackgroundColor: colorScheme.primary.withValues(
+                alpha: 0.6,
+              ),
             ),
             child: _isLoading
                 ? SizedBox(
@@ -464,8 +466,9 @@ class _BookingBottomSheetState extends State<BookingBottomSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colorScheme.primary,
                         foregroundColor: colorScheme.onPrimary,
-                        disabledBackgroundColor: colorScheme.primary
-                            .withOpacity(0.6),
+                        disabledBackgroundColor: colorScheme.primary.withValues(
+                          alpha: 0.6,
+                        ),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
