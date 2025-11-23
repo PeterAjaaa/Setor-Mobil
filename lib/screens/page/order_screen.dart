@@ -291,7 +291,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: colorScheme.surfaceVariant,
+                    color: colorScheme.surfaceContainerHighest,
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -299,7 +299,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                       imageUrl: order['image_url'],
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        color: colorScheme.surfaceVariant,
+                        color: colorScheme.surfaceContainerHighest,
                         child: Icon(
                           order['type'] == 'Motorcycle'
                               ? Icons.two_wheeler
@@ -309,7 +309,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                         ),
                       ),
                       errorWidget: (context, url, error) => Container(
-                        color: colorScheme.surfaceVariant,
+                        color: colorScheme.surfaceContainerHighest,
                         child: Icon(
                           order['type'] == 'Motorcycle'
                               ? Icons.two_wheeler
@@ -601,7 +601,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant,
+                    color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ClipRRect(
@@ -613,7 +613,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                             imageUrl: order['image_url'],
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
-                              color: colorScheme.surfaceVariant,
+                              color: colorScheme.surfaceContainerHighest,
                               child: Icon(
                                 order['type'] == 'Motorcycle'
                                     ? Icons.two_wheeler
@@ -623,7 +623,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen>
                               ),
                             ),
                             errorWidget: (context, url, error) => Container(
-                              color: colorScheme.surfaceVariant,
+                              color: colorScheme.surfaceContainerHighest,
                               child: Icon(
                                 order['type'] == 'Motorcycle'
                                     ? Icons.two_wheeler
