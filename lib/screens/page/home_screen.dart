@@ -104,7 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
         final carsData = jsonDecode(responses[0].body);
         if (carsData['status'] == 200 && carsData['data'] != null) {
           final cars = (carsData['data'] as List)
-              .where((car) => car['status'] == 'Available')
               .map((car) {
                 // Get ratings array
                 final ratings = car['ratings'] as List<dynamic>?;
@@ -122,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'description': car['description'],
                   'image_url': car['image_url'],
                   'registration_num': car['registration_num'],
+                  'status': car['status'],
                 };
               })
               .toList();
@@ -133,28 +133,26 @@ class _HomeScreenState extends State<HomeScreen> {
         final motorcyclesData = jsonDecode(responses[1].body);
         if (motorcyclesData['status'] == 200 &&
             motorcyclesData['data'] != null) {
-          final motorcycles = (motorcyclesData['data'] as List)
-              .where((moto) => moto['status'] == 'Available')
-              .map((moto) {
-                // Get ratings array
-                final ratings = moto['ratings'] as List<dynamic>?;
-                return {
-                  'id': moto['id'],
-                  'name': '${moto['brand']} ${moto['model']}',
-                  'brand': moto['brand'],
-                  'model': moto['model'],
-                  'type': 'Motorcycle',
-                  'price': '${_formatPrice(moto['price_per_day'])}/day',
-                  'pricePerDay': moto['price_per_day'],
-                  'rating': _calculateAverageRating(ratings),
-                  'ratingCount': ratings?.length ?? 0, // Add rating count
-                  'year': moto['year'],
-                  'description': moto['description'],
-                  'image_url': moto['image_url'],
-                  'registration_num': moto['registration_num'],
-                };
-              })
-              .toList();
+          final motorcycles = (motorcyclesData['data'] as List).map((moto) {
+            // Get ratings array
+            final ratings = moto['ratings'] as List<dynamic>?;
+            return {
+              'id': moto['id'],
+              'name': '${moto['brand']} ${moto['model']}',
+              'brand': moto['brand'],
+              'model': moto['model'],
+              'type': 'Motorcycle',
+              'price': '${_formatPrice(moto['price_per_day'])}/day',
+              'pricePerDay': moto['price_per_day'],
+              'rating': _calculateAverageRating(ratings),
+              'ratingCount': ratings?.length ?? 0, // Add rating count
+              'year': moto['year'],
+              'description': moto['description'],
+              'image_url': moto['image_url'],
+              'registration_num': moto['registration_num'],
+              'status': moto['status'],
+            };
+          }).toList();
           allVehicles.addAll(motorcycles);
         }
       }
@@ -672,28 +670,37 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              VehicleDetailScreen(vehicle: vehicle),
-                        ),
-                      );
-                    },
+                    onPressed: vehicle['status'] == 'Available'
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    VehicleDetailScreen(vehicle: vehicle),
+                              ),
+                            );
+                          }
+                        : null, // disables the button when not Available
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
+                      backgroundColor: vehicle['status'] == 'Available'
+                          ? colorScheme.primary
+                          : colorScheme.surfaceContainerHighest, // greyed out
+                      foregroundColor: vehicle['status'] == 'Available'
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurfaceVariant,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Rent Now',
-                      style: TextStyle(
-                        fontSize: 12,
+                    child: Text(
+                      vehicle['status'] == 'Available'
+                          ? 'Rent Now'
+                          : vehicle['status'] ??
+                                'Unavailable', // shows Rented / Maintenance / etc.
+                      style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
